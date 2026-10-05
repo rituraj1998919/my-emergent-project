@@ -156,6 +156,82 @@ def serialize_media(doc: dict) -> dict:
     }
 
 
+class Review(BaseDocument):
+    name: str
+    event: str = ""
+    quote: str
+    rating: int = 5
+    photo_path: str = ""
+    is_deleted: bool = False
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+def serialize_review(doc: dict) -> dict:
+    return {
+        "id": str(doc["_id"]),
+        "name": doc.get("name", ""),
+        "event": doc.get("event", ""),
+        "quote": doc.get("quote", ""),
+        "rating": doc.get("rating", 5),
+        "photo_url": f"/api/media/file/{doc['photo_path']}" if doc.get("photo_path") else None,
+        "created_at": doc.get("created_at"),
+    }
+
+
+@api_router.post("/reviews", response_model=dict)
+async def create_review(
+    name: str = Form(...),
+    event: str = Form(""),
+    quote: str = Form(...),
+    rating: int = Form(5),
+    photo: UploadFile = File(None),
+    authorization: str = Header(None),
+):
+    await get_current_owner(authorization)
+    rating = max(1, min(5, rating))
+    photo_path = ""
+    if photo and photo.filename:
+        ext = photo.filename.split(".")[-1].lower() if "." in photo.filename else ""
+        if ext not in IMAGE_EXTS:
+            raise HTTPException(status_code=400, detail="Review photo must be an image (jpg, png, webp, gif)")
+        data = await photo.read()
+        if len(data) > MAX_UPLOAD_BYTES:
+            raise HTTPException(status_code=413, detail="Photo too large (max 100MB)")
+        result = put_object(f"{APP_NAME}/reviews/{uuid.uuid4()}.{ext}", data, photo.content_type or "image/jpeg")
+        photo_path = result["path"]
+    doc = {
+        "name": name.strip() or "Happy Client",
+        "event": (event or "").strip(),
+        "quote": (quote or "").strip(),
+        "rating": rating,
+        "photo_path": photo_path,
+        "is_deleted": False,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    inserted = await db.reviews.insert_one(doc)
+    doc["_id"] = inserted.inserted_id
+    return serialize_review(doc)
+
+
+@api_router.get("/reviews", response_model=List[dict])
+async def list_reviews():
+    docs = await db.reviews.find({"is_deleted": False}).sort("created_at", -1).to_list(100)
+    return [serialize_review(d) for d in docs]
+
+
+@api_router.delete("/reviews/{review_id}", response_model=dict)
+async def delete_review(review_id: str, authorization: str = Header(None)):
+    await get_current_owner(authorization)
+    try:
+        oid = ObjectId(review_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid id")
+    result = await db.reviews.update_one({"_id": oid}, {"$set": {"is_deleted": True}})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Review not found")
+    return {"status": "deleted", "id": review_id}
+
+
 @api_router.get("/")
 async def root():
     return {"status": "ok", "service": "irsmakup.com API"}

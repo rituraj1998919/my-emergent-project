@@ -16,6 +16,10 @@ export default function Admin() {
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("Bridal");
   const [busy, setBusy] = useState(false);
+  const [reviewList, setReviewList] = useState([]);
+  const [rev, setRev] = useState({ name: "", event: "", quote: "", rating: "5" });
+  const [revPhoto, setRevPhoto] = useState(null);
+  const [revBusy, setRevBusy] = useState(false);
 
   const loadItems = async () => {
     try {
@@ -26,9 +30,59 @@ export default function Admin() {
     }
   };
 
+  const loadReviews = async () => {
+    try {
+      const { data } = await axios.get(`${API_URL}/api/reviews`);
+      setReviewList(Array.isArray(data) ? data : []);
+    } catch {
+      setReviewList([]);
+    }
+  };
+
   useEffect(() => {
-    if (token) loadItems();
+    if (token) {
+      loadItems();
+      loadReviews();
+    }
   }, [token]);
+
+  const submitReview = async (e) => {
+    e.preventDefault();
+    setRevBusy(true);
+    try {
+      const fd = new FormData();
+      fd.append("name", rev.name);
+      fd.append("event", rev.event);
+      fd.append("quote", rev.quote);
+      fd.append("rating", rev.rating);
+      if (revPhoto) fd.append("photo", revPhoto);
+      await axios.post(`${API_URL}/api/reviews`, fd, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("Review posted! It's live on the website.");
+      setRev({ name: "", event: "", quote: "", rating: "5" });
+      setRevPhoto(null);
+      document.getElementById("review-photo-input").value = "";
+      loadReviews();
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      toast.error(typeof detail === "string" ? detail : "Could not post review.");
+    } finally {
+      setRevBusy(false);
+    }
+  };
+
+  const removeReview = async (id) => {
+    try {
+      await axios.delete(`${API_URL}/api/reviews/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("Review removed.");
+      loadReviews();
+    } catch {
+      toast.error("Could not delete review.");
+    }
+  };
 
   const login = async (e) => {
     e.preventDefault();
@@ -48,20 +102,25 @@ export default function Admin() {
 
   const upload = async (e) => {
     e.preventDefault();
-    if (!file) {
+    if (!file || file.length === 0) {
       toast.error("Choose a photo or video first.");
       return;
     }
     setBusy(true);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("title", title);
-      fd.append("category", category);
-      await axios.post(`${API_URL}/api/media`, fd, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      toast.success("Posted! It's live on your portfolio now.");
+      const list = Array.from(file).slice(0, 10);
+      let done = 0;
+      for (const f of list) {
+        const fd = new FormData();
+        fd.append("file", f);
+        fd.append("title", title);
+        fd.append("category", category);
+        await axios.post(`${API_URL}/api/media`, fd, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        done += 1;
+        toast.success(`Posted ${done}/${list.length} — live on your portfolio.`);
+      }
       setFile(null);
       setTitle("");
       document.getElementById("media-file-input").value = "";
@@ -140,8 +199,8 @@ export default function Admin() {
 
           <div className="mt-6 grid sm:grid-cols-3 gap-4">
             <label className="block sm:col-span-1">
-              <span className="text-xs font-bold uppercase tracking-wider text-charcoal/70">Photo / Video *</span>
-              <input id="media-file-input" type="file" accept="image/*,video/*" required onChange={(e) => setFile(e.target.files[0])} className="field mt-2 p-2 file:mr-3 file:rounded-full file:border-0 file:bg-blush file:text-plumdeep file:px-4 file:py-1.5 file:text-xs file:font-bold" data-testid="admin-file-input" />
+              <span className="text-xs font-bold uppercase tracking-wider text-charcoal/70">Photos / Videos * (up to 10 ek saath)</span>
+              <input id="media-file-input" type="file" accept="image/*,video/*" multiple required onChange={(e) => setFile(e.target.files)} className="field mt-2 p-2 file:mr-3 file:rounded-full file:border-0 file:bg-blush file:text-plumdeep file:px-4 file:py-1.5 file:text-xs file:font-bold" data-testid="admin-file-input" />
             </label>
             <label className="block">
               <span className="text-xs font-bold uppercase tracking-wider text-charcoal/70">Title</span>
@@ -196,6 +255,68 @@ export default function Admin() {
               </div>
             ))}
           </div>
+        )}
+
+        <h2 className="font-display text-3xl text-charcoal mt-16 mb-2" data-testid="admin-reviews-heading">
+          Real Brides Wall <span className="text-base font-sans text-mutedtext">({reviewList.length})</span>
+        </h2>
+        <p className="text-sm text-mutedtext">Asli clients ke photos aur unke words — website ke reviews section me live.</p>
+
+        <form onSubmit={submitReview} className="bg-white rounded-[28px] border border-[#F0E6E2] p-7 sm:p-9 shadow-sm mt-6" data-testid="admin-review-form">
+          <div className="grid sm:grid-cols-3 gap-4">
+            <label className="block">
+              <span className="text-xs font-bold uppercase tracking-wider text-charcoal/70">Client Name *</span>
+              <input required value={rev.name} onChange={(e) => setRev((r) => ({ ...r, name: e.target.value }))} className="field mt-2" placeholder="Andrea & Marco" data-testid="admin-review-name-input" />
+            </label>
+            <label className="block">
+              <span className="text-xs font-bold uppercase tracking-wider text-charcoal/70">Event</span>
+              <input value={rev.event} onChange={(e) => setRev((r) => ({ ...r, event: e.target.value }))} className="field mt-2" placeholder="Tagaytay Wedding" data-testid="admin-review-event-input" />
+            </label>
+            <label className="block">
+              <span className="text-xs font-bold uppercase tracking-wider text-charcoal/70">Rating</span>
+              <select value={rev.rating} onChange={(e) => setRev((r) => ({ ...r, rating: e.target.value }))} className="field mt-2" data-testid="admin-review-rating-select">
+                {[5, 4, 3, 2, 1].map((n) => <option key={n} value={n}>{"★".repeat(n)} ({n})</option>)}
+              </select>
+            </label>
+          </div>
+          <label className="block mt-4">
+            <span className="text-xs font-bold uppercase tracking-wider text-charcoal/70">Their Words *</span>
+            <textarea required rows="3" value={rev.quote} onChange={(e) => setRev((r) => ({ ...r, quote: e.target.value }))} className="field mt-2 resize-none" placeholder="Hikarah made me feel like the most beautiful version of myself…" data-testid="admin-review-quote-input" />
+          </label>
+          <label className="block mt-4">
+            <span className="text-xs font-bold uppercase tracking-wider text-charcoal/70">Client Photo</span>
+            <input id="review-photo-input" type="file" accept="image/*" onChange={(e) => setRevPhoto(e.target.files[0])} className="field mt-2 p-2 file:mr-3 file:rounded-full file:border-0 file:bg-blush file:text-plumdeep file:px-4 file:py-1.5 file:text-xs file:font-bold" data-testid="admin-review-photo-input" />
+          </label>
+          <button type="submit" disabled={revBusy} data-testid="admin-review-submit-btn" className="mt-6 inline-flex items-center gap-3 rounded-full bg-plum text-cream font-bold px-8 py-3.5 hover:bg-ruby transition-colors disabled:opacity-60">
+            {revBusy ? "Posting…" : "Post Review"}
+          </button>
+        </form>
+
+        {reviewList.length > 0 ? (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-8" data-testid="admin-review-list">
+            {reviewList.map((r) => (
+              <div key={r.id} className="relative group bg-white rounded-[20px] border border-[#F0E6E2] p-5 card-hover" data-testid={`admin-review-item-${r.id}`}>
+                <div className="flex items-center gap-3">
+                  {r.photo_url ? (
+                    <img src={`${API_URL}${r.photo_url}`} alt={r.name} className="w-11 h-11 rounded-full object-cover border-2 border-champagne" loading="lazy" />
+                  ) : (
+                    <span className="w-11 h-11 rounded-full bg-gradient-to-br from-blush to-rosegold text-plumdeep flex items-center justify-center font-display italic text-lg">{r.name.charAt(0)}</span>
+                  )}
+                  <div className="min-w-0">
+                    <p className="font-bold text-charcoal text-sm truncate">{r.name}</p>
+                    <p className="text-[11px] uppercase tracking-widest text-rosegold font-bold truncate">{r.event}</p>
+                  </div>
+                </div>
+                <p className="mt-3 text-sm text-charcoal/80 leading-relaxed">"{r.quote}"</p>
+                <p className="mt-2 text-champagne text-sm tracking-widest" aria-label={`${r.rating} stars`}>{"★".repeat(r.rating)}</p>
+                <button onClick={() => removeReview(r.id)} data-testid={`admin-review-delete-${r.id}-btn`} aria-label={`Delete review by ${r.name}`} className="absolute top-3 right-3 rounded-full bg-ruby text-white p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-6 text-sm text-mutedtext" data-testid="admin-reviews-empty">No custom reviews yet — website par abhi sample reviews dikh rahe hain. Upar se pehla review post karein.</p>
         )}
       </main>
     </div>

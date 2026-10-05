@@ -1,8 +1,14 @@
 import React from "react";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Instagram, Youtube } from "lucide-react";
 import { Logo, WhatsAppIcon } from "../components/Logo";
 import { MaskLine, Reveal } from "../components/Reveal";
 import { WA_LINK, FB_LINK, waLink, scrollToId } from "../lib/site";
+
+const PinterestIcon = ({ className = "w-5 h-5" }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.08 3.16 9.43 7.63 11.18-.11-.95-.2-2.41.04-3.45.22-.93 1.4-5.94 1.4-5.94s-.36-.71-.36-1.77c0-1.66.96-2.9 2.16-2.9 1.02 0 1.51.76 1.51 1.68 0 1.02-.65 2.55-.99 3.97-.28 1.19.6 2.16 1.77 2.16 2.12 0 3.76-2.24 3.76-5.47 0-2.86-2.06-4.86-5-4.86-3.4 0-5.39 2.55-5.39 5.18 0 1.03.4 2.13.89 2.73.1.12.11.22.08.34l-.33 1.36c-.05.22-.17.27-.4.16-1.5-.7-2.43-2.88-2.43-4.64 0-3.77 2.74-7.25 7.9-7.25 4.14 0 7.36 2.95 7.36 6.9 0 4.12-2.6 7.43-6.2 7.43-1.21 0-2.35-.63-2.74-1.37l-.75 2.85c-.27 1.04-1 2.35-1.49 3.14 1.12.35 2.3.53 3.54.53 6.63 0 12-5.37 12-12S18.63 0 12 0z" />
+  </svg>
+);
 
 const LINKS = [
   { id: "about", label: "About" },
@@ -53,6 +59,17 @@ export default function Footer() {
           <Reveal delay={0.55}>
             <a href={`tel:${WA_LINK}`} data-testid="footer-phone-link" className="mt-8 inline-block font-display italic text-2xl sm:text-3xl text-champagne hover:text-blush transition-colors">
               +63 955 889 6008
+            </a>
+          </Reveal>
+          <Reveal delay={0.6} className="mt-7 flex justify-center gap-4">
+            <a href="https://instagram.com/irsmakup" target="_blank" rel="noopener noreferrer" aria-label="Instagram" data-testid="footer-instagram-link" className="w-11 h-11 rounded-full border-2 border-cream/25 text-cream flex items-center justify-center hover:bg-cream hover:text-plumdeep hover:-translate-y-1 transition-all duration-300">
+              <Instagram className="w-5 h-5" />
+            </a>
+            <a href="https://pinterest.com/irsmakup" target="_blank" rel="noopener noreferrer" aria-label="Pinterest" data-testid="footer-pinterest-link" className="w-11 h-11 rounded-full border-2 border-cream/25 text-cream flex items-center justify-center hover:bg-cream hover:text-plumdeep hover:-translate-y-1 transition-all duration-300">
+              <PinterestIcon className="w-5 h-5" />
+            </a>
+            <a href="https://youtube.com/@irsmakup" target="_blank" rel="noopener noreferrer" aria-label="YouTube" data-testid="footer-youtube-link" className="w-11 h-11 rounded-full border-2 border-cream/25 text-cream flex items-center justify-center hover:bg-cream hover:text-plumdeep hover:-translate-y-1 transition-all duration-300">
+              <Youtube className="w-5 h-5" />
             </a>
           </Reveal>
         </div>

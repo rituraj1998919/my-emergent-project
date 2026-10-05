@@ -26,7 +26,13 @@ Premium, high-converting, Awwwards-level makeup artist portfolio website for **H
 - Owner Studio at /admin: bcrypt+JWT login, photo/video upload to object storage, public serving, soft delete; live in portfolio with "New" badge; videos play on hover/inline.
 - Sample content flagged: prices (₱6.5k/₱12k/₱18k), reviews (3 testimonials), stats (8+ yrs, 500+ brides), before/after pair — replace with real client data.
 
+## Implemented (2026-10-05, update 2)
+- Real Brides Wall: owner posts client reviews (name, event, quote, 1–5 rating, client photo) from Owner Studio → live in Reviews section; falls back to samples when empty. POST/GET/DELETE /api/reviews.
+- Bulk upload: Owner Studio media input accepts up to 10 photos/videos at once (sequential upload, per-file toast).
+- Footer social buttons: Instagram / Pinterest / YouTube (placeholder handles @irsmakup — replace with real handles).
+- Google Maps embed (Philippines service-area) in Booking section.
+
 ## Backlog
 - **P0**: none (core flows verified).
-- **P1**: real testimonial photos; Instagram/Pinterest/YouTube links in footer; Google Maps embed in booking section.
+- **P1**: replace placeholder social handles with real ones; exact studio address for map pin.
 - **P2**: WhatsApp click counter/analytics; multi-image bulk upload; video thumbnails/posters; admin dashboard for inquiries list.

@@ -66,6 +66,18 @@ export default function Booking() {
               </span>
             </div>
           </div>
+
+          <Reveal delay={0.2} className="mt-8">
+            <div className="rounded-[24px] overflow-hidden border border-[#F0E6E2] shadow-[0_30px_60px_-30px_rgba(74,21,37,0.3)]" data-testid="booking-map-embed">
+              <iframe
+                title="Hikarah Lntc — service area map, Philippines"
+                src="https://www.google.com/maps?q=Philippines&z=5&output=embed"
+                className="w-full h-[260px] border-0 block"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+            </div>
+          </Reveal>
         </div>
 
         <Reveal y={40}>
