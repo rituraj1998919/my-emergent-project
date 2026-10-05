@@ -119,3 +119,19 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   border-color: #e89cae;
   box-shadow: 0 0 0 4px rgba(232, 156, 174, 0.18);
 }
+
+.comparison-badge { opacity: 1; transition: opacity 180ms ease; }
+@media (hover: hover) {
+  .comparison-badge { opacity: 0; }
+  .comparison-surface:hover .comparison-badge,
+  .comparison-surface:focus-visible .comparison-badge { opacity: 1; }
+}
+.look-action {
+  @apply inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2.5 text-xs font-bold;
+  border-color: color-mix(in srgb, currentColor 20%, transparent);
+  transition: background-color 180ms ease, transform 180ms ease;
+}
+.look-action:hover { background-color: rgba(232,156,174,.15); }
+.look-action.bg-plum:hover { background-color: #6b2339; }
+.look-action:focus-visible { outline: 2px solid #C5A059; outline-offset: 3px; }
+.look-action:disabled { opacity: .5; cursor: wait; }

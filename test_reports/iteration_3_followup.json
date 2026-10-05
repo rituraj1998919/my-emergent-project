@@ -1,0 +1,16 @@
+{
+  "date": "2026-10-05",
+  "main_agent_verification": {
+    "desktop_badges": "Passed on actual hover-capable desktop: hover=true, fine pointer=true, touch points=0; opacity 0 before hover, 1 on hover. Original report RCA did not account for CSS media query in index.css. No hover code change needed.",
+    "slider_keyboard": "Home=0 and End=100 verified.",
+    "png_download": {"width": 1080, "height": 1350, "type": "image/png", "bytes": 720510, "sampled_photo_colors": 14284, "result": "PASS: actual generated download Blob contains client photograph"},
+    "build": "yarn build passes without warnings",
+    "backend_tests": "22/22 pass after changing concurrency test to ThreadPoolExecutor and editing only disposable fixtures",
+    "budget_prices": "All 8 active records saved, re-fetched and public gallery card DOM verified. Bridal lightbox, booking text and share text show ₱1,500. Gallery category amounts ₱300/₱500/₱700/₱1,000/₱1,500. File URLs unchanged.",
+    "css": "User's second .look-action rule applied once with color-mix 20%"
+  },
+  "test_cleanup": "Removed only the known synthetic tap event b39ab7bc-c926-41e5-8d34-960da6187b66 at 2026-10-05T19:14:43.379916+00:00 using exact id/count/event/timestamp guard. Temporary media soft-deleted. Default labeled comparison placeholders restored.",
+  "remaining_verification": ["Real-device Messenger/native file-share destination behavior (browser/OS dependent)"],
+  "out_of_scope_existing_findings": ["CORS/auth-session hardening from previous codebase; no auth implementation changed"],
+  "test_report_links": ["/app/test_reports/iteration_3.json", "/app/test_reports/pytest/iteration3_followup.xml"]
+}

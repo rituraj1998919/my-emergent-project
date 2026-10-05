@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field, ConfigDict, BeforeValidator
 from typing import Optional, Annotated, List
 from bson import ObjectId
 from datetime import datetime, timezone, timedelta
+from gallery_features import create_gallery_router
 
 
 ROOT_DIR = Path(__file__).parent
@@ -443,6 +444,7 @@ async def startup():
 
 
 app.include_router(api_router)
+app.include_router(create_gallery_router(db, get_current_owner, serialize_media))
 
 app.add_middleware(
     CORSMiddleware,

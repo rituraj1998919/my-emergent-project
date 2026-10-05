@@ -1,18 +1,24 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import { toast, Toaster } from "sonner";
-import { Upload, Trash2, LogOut, Play, Lock, Image as ImageIcon, Film, CheckCircle2, Undo2 } from "lucide-react";
+import { Upload, Trash2, LogOut, Play, Lock, Image as ImageIcon, Film, CheckCircle2, Undo2, Pencil } from "lucide-react";
 import { LogoMark } from "../components/Logo";
 import { StudioSettings } from "../components/admin/StudioSettings";
+import { MediaPostEditor } from "../components/admin/MediaPostEditor";
+import { ComparisonManager } from "../components/admin/ComparisonManager";
+import { LookInsights } from "../components/admin/LookInsights";
+import { GALLERY_CATEGORIES } from "../lib/gallery";
 import { API_URL } from "../lib/site";
 
-const CATEGORIES = ["Bridal Glam", "Soft / Natural", "Party & Prom", "Eye & Brows", "Bridal Glam / Full Glam"];
+const CATEGORIES = GALLERY_CATEGORIES;
 
 export default function Admin() {
   const [token, setToken] = useState(localStorage.getItem("irsmakup_owner_token") || "");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [items, setItems] = useState([]);
+  const [editing, setEditing] = useState(null);
+  const [tapCounts, setTapCounts] = useState({});
   const [file, setFile] = useState(null);
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("Bridal Glam");
@@ -24,14 +30,14 @@ export default function Admin() {
   const [revPhoto, setRevPhoto] = useState(null);
   const [revBusy, setRevBusy] = useState(false);
 
-  const loadItems = async () => {
+  const loadItems = useCallback(async () => {
     try {
       const { data } = await axios.get(`${API_URL}/api/media`);
       setItems(data);
     } catch {
       /* gallery stays with defaults */
     }
-  };
+  }, []);
 
   const [inquiries, setInquiries] = useState([]);
   const [inqFilter, setInqFilter] = useState("all");
@@ -51,16 +57,16 @@ export default function Admin() {
   const visibleInquiries = inquiries.filter((q) => inqFilter === "all" || (q.status || "new") === inqFilter);
   const newCount = inquiries.filter((q) => (q.status || "new") === "new").length;
 
-  const loadReviews = async () => {
+  const loadReviews = useCallback(async () => {
     try {
       const { data } = await axios.get(`${API_URL}/api/reviews`);
       setReviewList(Array.isArray(data) ? data : []);
     } catch {
       setReviewList([]);
     }
-  };
+  }, []);
 
-  const loadInquiries = async () => {
+  const loadInquiries = useCallback(async () => {
     try {
       const { data } = await axios.get(`${API_URL}/api/inquiries`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -69,7 +75,7 @@ export default function Admin() {
     } catch {
       setInquiries([]);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     if (token) {
@@ -77,7 +83,7 @@ export default function Admin() {
       loadReviews();
       loadInquiries();
     }
-  }, [token]);
+  }, [token, loadItems, loadReviews, loadInquiries]);
 
   const submitReview = async (e) => {
     e.preventDefault();
@@ -293,6 +299,8 @@ export default function Admin() {
         </section>
 
         <StudioSettings token={token} />
+        <ComparisonManager token={token} items={items} />
+        <LookInsights token={token} items={items} onCounts={setTapCounts} />
 
         <form onSubmit={upload} className="bg-white rounded-[28px] border border-[#F0E6E2] p-7 sm:p-9 shadow-sm mt-10" data-testid="admin-upload-form">
           <h2 className="font-display text-3xl text-charcoal flex items-center gap-3">
@@ -340,7 +348,7 @@ export default function Admin() {
             <p className="mt-4 font-semibold">No posts yet — apna pehla makeup photo ya video upload karein.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-5" data-testid="admin-media-list">
+          <div className="grid grid-cols-1 min-[400px]:grid-cols-2 md:grid-cols-4 gap-5" data-testid="admin-media-list">
             {items.map((m) => (
               <div key={m.id} className="relative group rounded-[20px] overflow-hidden bg-white border border-[#F0E6E2] card-hover" data-testid={`admin-media-item-${m.id}`}>
                 {m.media_type === "video" ? (
@@ -352,14 +360,16 @@ export default function Admin() {
                   <span className="absolute top-3 left-3 rounded-full bg-plumdeep/80 text-cream p-1.5"><Play className="w-3 h-3" /></span>
                 )}
                 <div className="p-3">
-                  <p className="text-sm font-bold text-charcoal truncate">{m.title}</p>
-                  <p className="text-[11px] uppercase tracking-widest text-rosegold font-bold">{m.category}{m.price ? ` · ${m.price}` : ""}</p>
+                  <p className="text-sm font-bold text-charcoal break-words" data-testid={`admin-post-title-${m.id}`}>{m.title}</p>
+                  <p className="text-[11px] text-rosegold font-bold break-words mt-1" data-testid={`admin-post-details-${m.id}`}>{m.category}{m.price ? ` · ${m.price}` : ""}</p>
+                  <p className="text-xs text-mutedtext mt-2" data-testid={`admin-post-taps-${m.id}`}>{tapCounts[m.id] ?? "—"} enquiry taps</p>
+                  <button onClick={() => setEditing(m)} className="look-action text-plum mt-3 w-full" data-testid={`admin-edit-${m.id}-btn`}><Pencil size={14} />Edit look</button>
                 </div>
                 <button
                   onClick={() => remove(m.id)}
                   data-testid={`admin-delete-${m.id}-btn`}
                   aria-label={`Delete ${m.title}`}
-                  className="absolute top-3 right-3 rounded-full bg-ruby text-white p-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute top-3 right-3 rounded-full bg-ruby text-white p-2 hover:bg-plum transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -429,6 +439,7 @@ export default function Admin() {
         ) : (
           <p className="mt-6 text-sm text-mutedtext" data-testid="admin-reviews-empty">No custom reviews yet — website par abhi sample reviews dikh rahe hain. Upar se pehla review post karein.</p>
         )}
+        {editing && <MediaPostEditor key={editing.id} item={editing} token={token} onClose={() => setEditing(null)} onSaved={(updated) => setItems(list => list.map(m => m.id === updated.id ? updated : m))} />}
       </main>
     </div>
   );

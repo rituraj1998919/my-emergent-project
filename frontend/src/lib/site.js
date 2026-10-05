@@ -2,7 +2,8 @@ export const WA_NUMBER = "639558896008";
 export const WA_LINK = `https://wa.me/${WA_NUMBER}`;
 export const FB_LINK = "https://www.facebook.com/share/19axnjTYpP/";
 export const PHONE_DISPLAY = "+63 955 889 6008";
-export const API_URL = process.env.REACT_APP_BACKEND_URL || "";
+export const API_URL = process.env.REACT_APP_BACKEND_URL;
+if (!API_URL) throw new Error("REACT_APP_BACKEND_URL is required");
 
 export const waLink = (text) =>
   `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(text)}`;

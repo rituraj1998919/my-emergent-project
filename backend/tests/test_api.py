@@ -1,12 +1,16 @@
 import os
 import pytest
 import requests
+from pathlib import Path
+from dotenv import dotenv_values
 
-BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://beauty-showcase-106.preview.emergentagent.com").rstrip("/")
+FRONTEND_ENV = dotenv_values(Path(__file__).parents[2] / "frontend" / ".env")
+BACKEND_ENV = dotenv_values(Path(__file__).parents[1] / ".env")
+BASE_URL = (os.environ.get("REACT_APP_BACKEND_URL") or FRONTEND_ENV["REACT_APP_BACKEND_URL"]).rstrip("/")
 API = f"{BASE_URL}/api"
 
-OWNER_EMAIL = "hikarah@irsmakup.com"
-OWNER_PASS = "GlamQueen#2024"
+OWNER_EMAIL = BACKEND_ENV["ADMIN_EMAIL"]
+OWNER_PASS = BACKEND_ENV["ADMIN_PASSWORD"]
 
 DEFAULT_SETTINGS = {
     "studio_address": "Narra St. Victoria Pelayo, Brgy Centro Agdao, Davao City",
@@ -132,14 +136,14 @@ class TestInquiries:
 
 # ---- Media / Gallery (iteration 2) ----
 EXPECTED_TITLES = {
-    "Classic Davao Bridal Glam": ("Bridal Glam", "₱18,000"),
-    "Fresh Filipina Natural Look": ("Soft / Natural", "₱4,500"),
-    "Sultry Evening Party Glam": ("Party & Prom", "₱6,500"),
-    "Prom & Graduation Queen Look": ("Party & Prom", "₱6,500"),
-    "Signature Full Glam & Hair Combo": ("Bridal Glam / Full Glam", "₱8,500"),
-    "Precision Kilay & Eye Accent": ("Eye & Brows", "₱2,500"),
-    "Radiant Smile Bridal Glow": ("Bridal Glam", "₱18,000"),
-    "Dreamy Soft Glam Portrait": ("Soft / Natural", "₱4,500"),
+    "Classic Davao Bridal Glam": ("Bridal Glam", "₱1,500"),
+    "Fresh Filipina Natural Look": ("Soft / Natural", "₱500"),
+    "Sultry Evening Party Glam": ("Party & Prom", "₱700"),
+    "Prom & Graduation Queen Look": ("Party & Prom", "₱700"),
+    "Signature Full Glam & Hair Combo": ("Bridal Glam / Full Glam", "₱1,000"),
+    "Precision Kilay & Eye Accent": ("Eye & Brows", "₱300"),
+    "Radiant Smile Bridal Glow": ("Bridal Glam", "₱1,500"),
+    "Dreamy Soft Glam Portrait": ("Soft / Natural", "₱500"),
 }
 
 
