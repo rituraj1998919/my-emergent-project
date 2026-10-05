@@ -1,0 +1,181 @@
+{
+  "project_info": {
+    "name": "irsmakup.com - Hikarah Lntc Luxury Makeup Artist Portfolio & Booking",
+    "artist_name": "Hikarah Lntc",
+    "location": "Philippines",
+    "domain": "irsmakup.com",
+    "contact": {
+      "phone_formatted": "+63 955 889 6008",
+      "whatsapp": "https://wa.me/639558896008",
+      "whatsapp_number": "639558896008",
+      "facebook": "https://www.facebook.com/share/19axnjTYpP/"
+    }
+  },
+  "design_archetype": {
+    "name": "Luxury Editorial & Colorful Haute Beauty",
+    "vibe": "Attractive, Elegant, Trustworthy, Awwwards Site-of-the-Day Level, High-Fashion Editorial",
+    "emotional_goal": "Evoke timeless radiance, bridal confidence, red-carpet glam, and seamless effortless booking"
+  },
+  "typography": {
+    "heading_font": "Cormorant Garamond, Playfair Display, serif",
+    "body_font": "Plus Jakarta Sans, Outfit, sans-serif",
+    "accent_mono": "JetBrains Mono, monospace",
+    "hierarchy": {
+      "h1_hero": "text-4xl sm:text-6xl lg:text-7xl font-serif font-light tracking-tight leading-[1.08]",
+      "h2_section": "text-3xl sm:text-4xl lg:text-5xl font-serif font-normal tracking-tight",
+      "h3_card": "text-xl sm:text-2xl font-serif font-medium",
+      "body_text": "text-base sm:text-lg leading-relaxed text-charcoal/80",
+      "eyebrow_label": "text-xs uppercase tracking-[0.25em] font-sans font-semibold text-rose-gold"
+    }
+  },
+  "colors": {
+    "primary_accent": "#E89CAE",
+    "secondary_accent": "#D4AF37",
+    "rose_gold": "#C5A059",
+    "deep_plum": "#4A1525",
+    "ruby_pink": "#E63956",
+    "champagne_gold": "#E5C378",
+    "background_light": "#FAF7F5",
+    "surface_white": "#FFFFFF",
+    "surface_tinted": "#FFF9F8",
+    "text_dark_charcoal": "#1F1F24",
+    "text_muted": "#6E6B7B",
+    "border_subtle": "#F0E6E2",
+    "whatsapp_green": "#25D366"
+  },
+  "image_urls": {
+    "hero_portrait": "https://images.unsplash.com/photo-1583070012333-6cc68114bedf?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzR8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBicmlkYWwlMjBtYWtldXAlMjBwb3J0cmFpdCUyMHdvbWFuJTIwYmVhdXR5JTIwUGhpbGlwcGluZXMlMjBnbG93aW5nJTIwc2tpbiUyMHBob3Rvc2hvb3QlMjBnbGFtfGVufDB8fHx8MTc5MTE1ODE3MXww&ixlib=rb-4.1.0&q=85",
+    "artist_portrait": "https://images.unsplash.com/photo-1604261605115-4b34b646a05c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2NDJ8MHwxfHNlYXJjaHw0fHxoaWdoJTIwZmFzaGlvbiUyMGJlYXV0eSUyMG1ha2V1cCUyMGFydGlzdCUyMGxpcHN0aWNrJTIwZXllJTIwZ2xhbSUyMHBvcnRyYWl0JTIwY2xvc2UlMjB1cHxlbnwwfHx8fDE3OTExNTgxNzh8MA&ixlib=rb-4.1.0&q=85",
+    "bridal_service": "https://images.unsplash.com/photo-1633926947455-5e779c3de5c6?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzR8MHwxfHNlYXJjaHwyfHxsdXh1cnklMjBicmlkYWwlMjBtYWtldXAlMjBwb3J0cmFpdCUyMHdvbWFuJTIwYmVhdXR5JTIwUGhpbGlwcGluZXMlMjBnbG93aW5nJTIwc2tpbiUyMHBob3Rvc2hvb3QlMjBnbGFtfGVufDB8fHx8MTc5MTE1ODE3MXww&ixlib=rb-4.1.0&q=85",
+    "event_glam": "https://images.unsplash.com/photo-1610166970010-c2e6c3da7164?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2NDJ8MHwxfHNlYXJjaHwxfHxoaWdoJTIwZmFzaGlvbiUyMGJlYXV0eSUyMG1ha2V1cCUyMGFydGlzdCUyMGxpcHN0aWNrJTIwZXllJTIwZ2xhbSUyMHBvcnRyYWl0JTIwY2xvc2UlMjB1cHxlbnwwfHx8fDE3OTExNTgxNzh8MA&ixlib=rb-4.1.0&q=85",
+    "photoshoot_styling": "https://images.pexels.com/photos/20459105/pexels-photo-20459105.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+    "hair_styling": "https://images.unsplash.com/photo-1591351897269-32424bb1005a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzR8MHwxfHNlYXJjaHwzfHxsdXh1cnklMjBicmlkYWwlMjBtYWtldXAlMjBwb3J0cmFpdCUyMHdvbWFuJTIwYmVhdXR5JTIwUGhpbGlwcGluZXMlMjBnbG93aW5nJTIwc2tpbiUyMHBob3Rvc2hvb3QlMjBnbGFtfGVufDB8fHx8MTc5MTE1ODE3MXww&ixlib=rb-4.1.0&q=85",
+    "luxury_cosmetics": "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2MTJ8MHwxfHNlYXJjaHwyfHxsdXh1cnklMjBtYWtldXAlMjBjb3NtZXRpY3MlMjBicnVzaGVzJTIwbGlwc3RpY2slMjBmb3VuZGF0aW9uJTIwcGFsZXR0ZSUyMGdvbGQlMjBibHVzaHxlbnwwfHx8fDE3OTExNTgxNzh8MA&ixlib=rb-4.1.0&q=85",
+    "cosmetic_flatlay": "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2MTJ8MHwxfHNlYXJjaHwzfHxsdXh1cnklMjBtYWtldXAlMjBjb3NtZXRpY3MlMjBicnVzaGVzJTIwbGlwc3RpY2slMjBmb3VuZGF0aW9uJTIwcGFsZXR0ZSUyMGdvbGQlMjBibHVzaHxlbnwwfHx8fDE3OTExNTgxNzh8MA&ixlib=rb-4.1.0&q=85",
+    "before_after_before": "https://images.unsplash.com/photo-1676439977206-b5ffdfc03da2?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2NDJ8MHwxfHNlYXJjaHwyfHxoaWdoJTIwZmFzaGlvbiUyMGJlYXV0eSUyMG1ha2V1cCUyMGFydGlzdCUyMGxpcHN0aWNrJTIwZXllJTIwZ2xhbSUyMHBvcnRyYWl0JTIwY2xvc2UlMjB1cHxlbnwwfHx8fDE3OTExNTgxNzh8MA&ixlib=rb-4.1.0&q=85",
+    "before_after_after": "https://images.pexels.com/photos/36551846/pexels-photo-36551846.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
+  },
+  "sections_breakdown": [
+    {
+      "id": "header",
+      "name": "Sticky Navigation Header",
+      "features": [
+        "Custom inline SVG monogram logo mark 'irsmakup' in blush & rose gold",
+        "Nav links: About, Services, Portfolio, Pricing, Reviews, Contact",
+        "Direct WhatsApp CTA button with icon (+63 9558896008)",
+        "Glassmorphism blur background (backdrop-blur-md bg-white/80 border-b border-rose-gold/20)"
+      ]
+    },
+    {
+      "id": "hero",
+      "name": "Kinetic Hero Section",
+      "features": [
+        "Masked line-by-line reveal typography",
+        "High-res portrait with floating badge 'Bookings Open 2026/2027'",
+        "Headline: 'Redefining Luxury Beauty in the Philippines'",
+        "Sub-headline celebrating artist Hikarah Lntc",
+        "Quick action buttons: 'Book on WhatsApp' & 'Explore Gallery'"
+      ]
+    },
+    {
+      "id": "about",
+      "name": "About Hikarah Lntc",
+      "features": [
+        "Editorial split layout with artist portrait & biography",
+        "Key stats: 8+ Years Experience, 1,200+ Brides & Clients Glammed, 100% Skin-Match Guarantee",
+        "Philosophy & passion statement for personalized luxury beauty"
+      ]
+    },
+    {
+      "id": "services",
+      "name": "Services Grid",
+      "features": [
+        "Bridal & Wedding Makeup (Traditional & Airbrush)",
+        "Event & Party Glam (Debutante, Gala, Red Carpet)",
+        "Photoshoot & Editorial Styling",
+        "Hair Styling & Hair Artistry",
+        "Interactive cards with custom WhatsApp Inquire deep links pre-filling service name"
+      ]
+    },
+    {
+      "id": "marquee",
+      "name": "Slow Editorial Marquee",
+      "features": [
+        "Continuous kinetic text stream: 'BRIDAL GLAM • EDITORIAL ARTISTRY • HIGH FASHION • RADIANT SKIN • HIKARAH LNTC • IRSMAKUP'",
+        "Soft rose-gold tinted background with floating luxury icons"
+      ]
+    },
+    {
+      "id": "portfolio",
+      "name": "Portfolio Gallery & Before/After Experience",
+      "features": [
+        "Category tabs: All, Bridal, Glam, Editorial, Hair",
+        "Masonry layout with smooth hover zoom & title overlays",
+        "Interactive Lightbox Modal with zoom & image switching",
+        "Interactive Before & After slider with draggable divider showing raw skin vs finished glam transformation"
+      ]
+    },
+    {
+      "id": "pricing",
+      "name": "Packages & Pricing Cards (PHP Currency)",
+      "features": [
+        "Bridal Luxe Package (₱18,000)",
+        "Event & Debutante Package (₱6,500)",
+        "Photoshoot & Commercial Package (₱12,000)",
+        "Package breakdown checklist (Airbrush, Touch-up kit, Hair styling, Lashes included)",
+        "Direct 'Enquire via WhatsApp' button on every card"
+      ]
+    },
+    {
+      "id": "why_choose_me",
+      "name": "Trust Signals & Premium Brands",
+      "features": [
+        "Prominent brand logos showcase: M·A·C, Bobbi Brown, NARS, Huda Beauty, Charlotte Tilbury, Dior Beauty",
+        "Trust Badges: 100% Sanitized & Hygienic Tools, All-Day Waterproof Wear, Custom Skin Matching, Punctual On-Site Service across PH"
+      ]
+    },
+    {
+      "id": "reviews",
+      "name": "Client Reviews & Star Ratings",
+      "features": [
+        "Testimonial cards with 5-star golden ratings, client photos, venue/event details",
+        "Filterable or carousel view with authentic feedback from Philippines brides & models"
+      ]
+    },
+    {
+      "id": "booking_form",
+      "name": "Interactive Booking & WhatsApp Dispatch",
+      "features": [
+        "Fields: Full Name, Phone / Viber, Event Date, Event Type, Venue / Location, Number of Pax, Message",
+        "Form submits to backend FastAPI `/api/inquiries` endpoint for records",
+        "Upon successful submit, triggers instant toast & automatically launches WhatsApp link `wa.me/639558896008` populated with client details"
+      ]
+    },
+    {
+      "id": "footer",
+      "name": "Luxury Editorial Footer",
+      "features": [
+        "Massive editorial CTA header: 'Ready for your glam session?'",
+        "Clickable WhatsApp link (+63 955 889 6008)",
+        "Facebook page link (https://www.facebook.com/share/19axnjTYpP/)",
+        "Copyright & irsmakup.com branding"
+      ]
+    }
+  ],
+  "instructions_to_main_agent": [
+    "Ensure Lenis smooth scrolling or Framer Motion scroll container is implemented for smooth fluid motion",
+    "All interactive elements must include 'data-testid' attributes (e.g. data-testid='nav-whatsapp-btn', data-testid='booking-submit-btn', etc.)",
+    "Header MUST be sticky with backdrop-blur background, NEVER full transparent without blur",
+    "WhatsApp link must be formatted as: https://wa.me/639558896008?text=...",
+    "Facebook link must target: https://www.facebook.com/share/19axnjTYpP/",
+    "Create custom Monogram SVG logo for 'irsmakup' and display in header & footer",
+    "Ensure responsive layout works perfectly on mobile viewports (mobile-first)",
+    "Backend endpoint `/api/inquiries` must handle POST requests with fields: name, phone, event_date, event_type, venue, pax, message"
+  ],
+  "UNIVERSAL GUIDELINES FOR MAIN AGENT": [
+    "Do NOT use generic Inter font for headings. Use Cormorant Garamond or Playfair Display",
+    "Maintain contrast compliance (APCA / WCAG AA). White text on dark buttons, dark text on light surfaces",
+    "Every button and input must have clear hover and focus states with visual feedback",
+    "No raw placeholder images — strictly use the provided curated unsplash/pexels URLs"
+  ]
+}
