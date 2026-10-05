@@ -74,7 +74,18 @@ Premium, high-converting, Awwwards-level makeup artist portfolio website for **H
 - Native Messenger targets/file handoff depend on installed apps/browser; real-device send-sheet testing remains user verification. No app APIs are mocked. PLACEHOLDERS: before/after preview photos only (plus pre-existing sample content described above).
 
 ## Prioritized Backlog / Next Action Items
-- **P0**: none known in requested gallery flows. User verification pending.
+- **P0**: security audit found a likely owner-login lockout defect (SEC-001); fix before treating authentication as hardened. Gallery flows remain functionally verified; user verification pending.
 - **P1**: Hikarah to select actual before/after photo pair in Owner Studio; verify native Messenger/file sharing on her phone; set real social handles. Optionally align Services/Pricing rates with the new gallery budget (not yet requested).
 - **P2**: gallery/admin pagination; video thumbnails; inquiry deletion; optional social Open Graph previews. Pre-existing auth hardening follow-up (CORS policy and cookie/session strategy) needs separate scoped work; no auth changes made in this task, bearer flow works. `/app/auth_testing.md` mentioned by tester does not exist and was not a requirement of this gallery task.
 - **Enhancement suggestion**: budget-based gallery filters (e.g. under ₱500 / ₱1,000 / ₱1,500) to help clients find an affordable look quickly.
+
+## Latest Requests / Read-only Security Audit (2026-10-05)
+- User then wrote "or 200 peso krdena3000 peso". Clarification sent: add ₱200/₱3,000 to two looks or apply one amount to all. **No answer received; no further price change applied.** Existing ₱300–₱1,500 gallery prices remain.
+- New user request: **"Run the Security Audit on the deployed app."** Security audit completed read-only against accessible source/configuration. Actual deployed URL/runtime could not be verified; preview/source review is NOT production certification.
+- Report: `/app/memory/SECURITY_AUDIT.md`. Verdict: conditional pass for reviewed source/configuration, needs attention; no confirmed critical/high exploit, medium confidence.
+- **SEC-001 medium/likely:** naive Mongo datetime vs aware UTC comparison can permanently jam owner login after failed-attempt lockout. Inferred from source; no deliberate owner-account lockout performed.
+- **SEC-002 low/confirmed:** `.env` not ignored; hard-coded fallback owner credentials and startup password-reset behavior. Secrets not exposed in report.
+- **SEC-003 low/confirmed:** no rate limits on anonymous enquiry taps and inquiry writes.
+- Additional hardening: explicit CORS allowlist, media proxy namespace/path limits and storage tenancy verification, validated/normalized upload MIME types.
+- **No application fixes, credential changes, data edits or deployment operations performed during audit.** User explicitly requires testing-agent verification after any later bug fix before claiming it fixed.
+- Next: address login lockout first, then secret/seeding and public-write abuse controls; obtain verified deployed URL/runtime access for production security checks.
