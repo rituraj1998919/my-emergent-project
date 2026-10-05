@@ -130,6 +130,95 @@ class TestInquiries:
         assert r.status_code == 404
 
 
+# ---- Media / Gallery (iteration 2) ----
+EXPECTED_TITLES = {
+    "Classic Davao Bridal Glam": ("Bridal Glam", "₱18,000"),
+    "Fresh Filipina Natural Look": ("Soft / Natural", "₱4,500"),
+    "Sultry Evening Party Glam": ("Party & Prom", "₱6,500"),
+    "Prom & Graduation Queen Look": ("Party & Prom", "₱6,500"),
+    "Signature Full Glam & Hair Combo": ("Bridal Glam / Full Glam", "₱8,500"),
+    "Precision Kilay & Eye Accent": ("Eye & Brows", "₱2,500"),
+    "Radiant Smile Bridal Glow": ("Bridal Glam", "₱18,000"),
+    "Dreamy Soft Glam Portrait": ("Soft / Natural", "₱4,500"),
+}
+
+
+class TestMediaGallery:
+    def test_media_list_has_8_seeded(self):
+        r = requests.get(f"{API}/media", timeout=20)
+        assert r.status_code == 200
+        items = r.json()
+        # filter only seeded (exclude any test uploads with 'TEST_' prefix)
+        seeded = [m for m in items if m["title"] in EXPECTED_TITLES]
+        assert len(seeded) == 8, f"Expected 8 seeded photos, got {len(seeded)}. Titles: {[m['title'] for m in items]}"
+        for m in seeded:
+            exp_cat, exp_price = EXPECTED_TITLES[m["title"]]
+            assert m["category"] == exp_cat, f"{m['title']}: category {m['category']} != {exp_cat}"
+            assert m["price"] == exp_price, f"{m['title']}: price {m['price']} != {exp_price}"
+            assert m["rating"] == 5.0
+            assert m["media_type"] == "image"
+            assert m["url"].startswith("/api/media/file/")
+            assert m.get("description", "") != ""
+            for key in ("id", "url", "title", "category", "description", "price", "rating", "media_type"):
+                assert key in m
+
+    def test_media_file_served(self):
+        lst = requests.get(f"{API}/media", timeout=20).json()
+        seeded = [m for m in lst if m["title"] in EXPECTED_TITLES]
+        assert seeded, "No seeded media"
+        url = f"{BASE_URL}{seeded[0]['url']}"
+        r = requests.get(url, timeout=30)
+        assert r.status_code == 200
+        assert r.headers.get("Content-Type", "").startswith("image/")
+        assert len(r.content) > 100
+
+    def test_media_upload_and_delete(self, auth_headers):
+        # tiny 1x1 PNG
+        png = bytes.fromhex(
+            "89504E470D0A1A0A0000000D49484452000000010000000108060000001F15C4890000000D4944"
+            "415478DA63FCCFC0F01F0005000100A5A0F2D30000000049454E44AE426082"
+        )
+        files = {"file": ("test_tiny.png", png, "image/png")}
+        data = {
+            "title": "TEST_Upload Playwright",
+            "category": "Party & Prom",
+            "description": "test description",
+            "price": "₱6,500",
+        }
+        r = requests.post(f"{API}/media", files=files, data=data, headers=auth_headers, timeout=60)
+        assert r.status_code == 200, r.text
+        doc = r.json()
+        assert doc["title"] == "TEST_Upload Playwright"
+        assert doc["category"] == "Party & Prom"
+        assert doc["description"] == "test description"
+        assert doc["price"] == "₱6,500"
+        assert doc["rating"] == 5.0
+        assert doc["media_type"] == "image"
+        media_id = doc["id"]
+
+        # verify present in list
+        lst = requests.get(f"{API}/media", timeout=20).json()
+        assert any(m["id"] == media_id for m in lst)
+
+        # delete
+        d = requests.delete(f"{API}/media/{media_id}", headers=auth_headers, timeout=20)
+        assert d.status_code == 200
+        assert d.json()["status"] == "deleted"
+
+        # confirm gone
+        lst2 = requests.get(f"{API}/media", timeout=20).json()
+        assert not any(m["id"] == media_id for m in lst2)
+
+        # ensure 8 seeded still intact
+        seeded = [m for m in lst2 if m["title"] in EXPECTED_TITLES]
+        assert len(seeded) == 8
+
+    def test_media_upload_requires_auth(self):
+        files = {"file": ("x.png", b"not-a-real-png", "image/png")}
+        r = requests.post(f"{API}/media", files=files, data={"title": "x"}, timeout=20)
+        assert r.status_code == 401
+
+
 # ---- Regression ----
 class TestRegression:
     def test_media_list(self):

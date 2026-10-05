@@ -35,7 +35,15 @@ Premium, high-converting, Awwwards-level makeup artist portfolio website for **H
 ## Implemented (2026-10-05, update 3)
 - Inquiry Inbox: Owner Studio me "Booking Inquiries" panel — har form inquiry (naam, phone, date, event type, venue, pax, message) owner ko dikhti hai with one-tap "Reply on WhatsApp". GET /api/inquiries ab owner-only hai (privacy fix; pehle public tha).
 
+## Implemented (2026-10-05, update 4)
+- Studio Settings (Owner Studio): studio address, service-area line, Facebook/Instagram/Pinterest/YouTube links editable by owner. GET /api/settings (public) / PUT /api/settings (owner). Booking map pin + address line and Footer social icons/address read from settings. Default studio address: Narra St. Victoria Pelayo, Brgy Centro Agdao, Davao City. Empty social link hides that icon.
+- Inquiry Inbox: Mark as Replied / Mark as New toggle (PATCH /api/inquiries/{id}/status), New/Replied badges, All/New/Replied filter, "N new" counter. New inquiries default status "new".
+- Portfolio rebuilt as "Our Real Transformations & Client Gallery": 8 real client photos (owner-provided) seeded into object storage + db.media via `/app/backend/seed_gallery.py` (idempotent). Filter tabs All Looks / Bridal Glam / Soft / Natural / Party & Prom / Eye & Brows; hover overlay (soft pink/nude) shows look name, category, price; gold 5.0 ★ badge; lightbox with description, price, "Book This Look" WhatsApp CTA, keyboard nav. Stock gallery images removed (before/after slider kept, still stock).
+- Media schema extended: description, price, rating. Admin upload form has Description + Price inputs; categories updated to the new 5.
+- Components split: `components/gallery/GalleryCard.jsx`, `GalleryLightbox.jsx`, `components/admin/StudioSettings.jsx`, hook `lib/useSettings.js`.
+- Gallery prices are placeholders (₱18,000 bridal, ₱8,500 full glam+hair, ₱6,500 party/prom, ₱4,500 soft/natural, ₱2,500 kilay/eye) — owner should confirm. Two extra photos got agent-assigned titles ("Radiant Smile Bridal Glow", "Dreamy Soft Glam Portrait").
+
 ## Backlog
-- **P0**: none (core flows verified).
-- **P1**: replace placeholder social handles (@irsmakup) with real ones; exact studio address for map pin.
-- **P2**: WhatsApp click counter/analytics; inquiry delete/mark-replied; video thumbnails/posters.
+- **P0**: none (core flows verified — test_reports/iteration_1.json, iteration_2.json).
+- **P1**: real Instagram/Pinterest/YouTube handles (owner can set in Studio Settings — currently @irsmakup placeholders); confirm gallery look prices; edit title/price/category of existing gallery posts from admin (PATCH /api/media/{id} not yet built).
+- **P2**: WhatsApp click counter/analytics; inquiry delete; video thumbnails/posters; replace stock before/after slider with real pair; pagination for gallery/admin when media grows.

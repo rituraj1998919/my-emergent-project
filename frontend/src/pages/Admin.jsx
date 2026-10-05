@@ -386,7 +386,7 @@ export default function Admin() {
             <label className="block">
               <span className="text-xs font-bold uppercase tracking-wider text-charcoal/70">Rating</span>
               <select value={rev.rating} onChange={(e) => setRev((r) => ({ ...r, rating: e.target.value }))} className="field mt-2" data-testid="admin-review-rating-select">
-                {[5, 4, 3, 2, 1].map((n) => <option key={n} value={n}>{"★".repeat(n)} ({n})</option>)}
+                {[5, 4, 3, 2, 1].map((n) => <option key={n} value={n}>{`${"★".repeat(n)} (${n})`}</option>)}
               </select>
             </label>
           </div>
