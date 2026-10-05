@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { toast, Toaster } from "sonner";
-import { Upload, Trash2, LogOut, Play, Lock, Image as ImageIcon, Film } from "lucide-react";
+import { Upload, Trash2, LogOut, Play, Lock, Image as ImageIcon, Film, CheckCircle2, Undo2 } from "lucide-react";
 import { LogoMark } from "../components/Logo";
+import { StudioSettings } from "../components/admin/StudioSettings";
 import { API_URL } from "../lib/site";
 
 const CATEGORIES = ["Bridal", "Glam", "Editorial", "Hair"];
@@ -31,6 +32,22 @@ export default function Admin() {
   };
 
   const [inquiries, setInquiries] = useState([]);
+  const [inqFilter, setInqFilter] = useState("all");
+
+  const setInquiryStatus = async (id, status) => {
+    try {
+      await axios.patch(`${API_URL}/api/inquiries/${id}/status`, { status }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setInquiries((list) => list.map((q) => (q.id === id ? { ...q, status } : q)));
+      toast.success(status === "replied" ? "Marked as replied ✓" : "Moved back to New.");
+    } catch {
+      toast.error("Could not update inquiry.");
+    }
+  };
+
+  const visibleInquiries = inquiries.filter((q) => inqFilter === "all" || (q.status || "new") === inqFilter);
+  const newCount = inquiries.filter((q) => (q.status || "new") === "new").length;
 
   const loadReviews = async () => {
     try {
@@ -206,42 +223,70 @@ export default function Admin() {
 
       <main className="max-w-6xl mx-auto px-5 sm:px-8 py-12">
         <section className="bg-white rounded-[28px] border border-[#F0E6E2] p-7 sm:p-9 shadow-sm" data-testid="admin-inquiries-panel">
-          <h2 className="font-display text-3xl text-charcoal">
-            Booking Inquiries <span className="text-base font-sans text-mutedtext" data-testid="admin-inquiries-count">({inquiries.length})</span>
-          </h2>
-          <p className="text-sm text-mutedtext mt-1">Website ke booking form se aayi har inquiry — seedha WhatsApp par reply karein.</p>
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <div>
+              <h2 className="font-display text-3xl text-charcoal">
+                Booking Inquiries <span className="text-base font-sans text-mutedtext" data-testid="admin-inquiries-count">({inquiries.length})</span>
+                {newCount > 0 && <span className="ml-3 align-middle rounded-full bg-ruby text-white text-xs font-bold px-2.5 py-1" data-testid="admin-inquiries-new-badge">{newCount} new</span>}
+              </h2>
+              <p className="text-sm text-mutedtext mt-1">Website ke booking form se aayi har inquiry — WhatsApp par reply karein, phir "Replied" mark karein.</p>
+            </div>
+            <div className="inline-flex rounded-full border border-[#F0E6E2] p-1 bg-cream" data-testid="admin-inquiry-filter">
+              {[["all", "All"], ["new", "New"], ["replied", "Replied"]].map(([v, label]) => (
+                <button key={v} type="button" onClick={() => setInqFilter(v)} data-testid={`admin-inquiry-filter-${v}`} className={`rounded-full px-4 py-1.5 text-xs font-bold transition-colors ${inqFilter === v ? "bg-plum text-cream" : "text-charcoal/60 hover:text-plum"}`}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
 
-          {inquiries.length === 0 ? (
+          {visibleInquiries.length === 0 ? (
             <div className="mt-6 rounded-[20px] border-2 border-dashed border-blush/60 p-10 text-center text-mutedtext" data-testid="admin-inquiry-empty">
-              <p className="font-semibold">Abhi koi inquiry nahi aayi — jaise hi koi client form bharega, yahan dikhega.</p>
+              <p className="font-semibold">{inquiries.length === 0 ? "Abhi koi inquiry nahi aayi — jaise hi koi client form bharega, yahan dikhega." : "Is filter me koi inquiry nahi."}</p>
             </div>
           ) : (
             <div className="mt-6 space-y-4" data-testid="admin-inquiries-list">
-              {inquiries.map((q) => (
-                <div key={q.id} className="rounded-[20px] border border-[#F0E6E2] p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 card-hover" data-testid={`admin-inquiry-item-${q.id}`}>
+              {visibleInquiries.map((q) => {
+                const replied = (q.status || "new") === "replied";
+                return (
+                <div key={q.id} className={`rounded-[20px] border p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 card-hover ${replied ? "border-[#F0E6E2] bg-cream/60 opacity-75" : "border-blush/70 bg-white"}`} data-testid={`admin-inquiry-item-${q.id}`} data-status={replied ? "replied" : "new"}>
                   <div className="min-w-0">
-                    <p className="font-bold text-charcoal">
+                    <p className="font-bold text-charcoal flex flex-wrap items-center gap-2">
                       {q.name} <span className="text-xs font-semibold text-rosegold uppercase tracking-widest">· {q.event_type}</span>
+                      <span className={`rounded-full text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 ${replied ? "bg-whatsapp/30 text-plumdeep" : "bg-ruby/10 text-ruby"}`} data-testid={`admin-inquiry-status-${q.id}`}>{replied ? "Replied" : "New"}</span>
                     </p>
                     <p className="text-sm text-mutedtext mt-0.5">
-                      {q.event_date}{q.venue ? ` · ${q.venue}` : ""} · {q.pax} pax
+                      {q.event_date}{q.venue ? ` · ${q.venue}` : ""} · {q.pax} pax · {q.phone}
                     </p>
                     {q.message && <p className="text-sm text-charcoal/70 mt-1">"{q.message}"</p>}
                   </div>
-                  <a
-                    href={`https://wa.me/${(q.phone || "").replace(/[^0-9]/g, "")}?text=${encodeURIComponent(`Hi ${q.name}! Hikarah here — salamat kaayo for your ${q.event_type} inquiry. Let's confirm your date!`)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    data-testid={`admin-inquiry-wa-${q.id}-btn`}
-                    className="shrink-0 inline-flex items-center justify-center rounded-full bg-whatsapp text-plumdeep text-sm font-bold px-6 py-2.5 hover:-translate-y-0.5 transition-transform"
-                  >
-                    Reply on WhatsApp
-                  </a>
+                  <div className="shrink-0 flex flex-wrap gap-2">
+                    <a
+                      href={`https://wa.me/${(q.phone || "").replace(/[^0-9]/g, "")}?text=${encodeURIComponent(`Hi ${q.name}! Hikarah here — salamat kaayo for your ${q.event_type} inquiry. Let's confirm your date!`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      data-testid={`admin-inquiry-wa-${q.id}-btn`}
+                      className="inline-flex items-center justify-center rounded-full bg-whatsapp text-plumdeep text-sm font-bold px-5 py-2.5 hover:-translate-y-0.5 transition-transform"
+                    >
+                      Reply on WhatsApp
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => setInquiryStatus(q.id, replied ? "new" : "replied")}
+                      data-testid={`admin-inquiry-toggle-${q.id}-btn`}
+                      className={`inline-flex items-center justify-center gap-1.5 rounded-full border-2 text-sm font-bold px-5 py-2.5 transition-colors ${replied ? "border-charcoal/15 text-charcoal/60 hover:border-ruby hover:text-ruby" : "border-plum text-plum hover:bg-plum hover:text-cream"}`}
+                    >
+                      {replied ? <><Undo2 className="w-4 h-4" /> Mark as New</> : <><CheckCircle2 className="w-4 h-4" /> Mark as Replied</>}
+                    </button>
+                  </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </section>
+
+        <StudioSettings token={token} />
 
         <form onSubmit={upload} className="bg-white rounded-[28px] border border-[#F0E6E2] p-7 sm:p-9 shadow-sm mt-10" data-testid="admin-upload-form">
           <h2 className="font-display text-3xl text-charcoal flex items-center gap-3">

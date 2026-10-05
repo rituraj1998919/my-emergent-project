@@ -5,10 +5,12 @@ import { CalendarCheck, Facebook, Phone, MapPin } from "lucide-react";
 import { Reveal, SectionHead } from "../components/Reveal";
 import { WhatsAppIcon } from "../components/Logo";
 import { API_URL, WA_LINK, waLink, FB_LINK, PHONE_DISPLAY } from "../lib/site";
+import { useSettings, mapEmbedUrl } from "../lib/useSettings";
 
 const EVENT_TYPES = ["Christian Church Wedding", "Jehovah's Witness Wedding", "Civil Wedding", "Engagement", "Debut", "Party / Reception", "Photoshoot / Editorial", "Hair Styling Only", "Other"];
 
 export default function Booking() {
+  const settings = useSettings();
   const [form, setForm] = useState({ name: "", phone: "", event_date: "", event_type: "", venue: "", pax: "1", message: "" });
   const [sending, setSending] = useState(false);
 
@@ -51,27 +53,28 @@ export default function Booking() {
                 <span className="font-bold text-charcoal group-hover:text-plum transition-colors">{PHONE_DISPLAY}</span>
               </span>
             </a>
-            <a href={FB_LINK} target="_blank" rel="noopener noreferrer" data-testid="booking-fb-link" className="flex items-center gap-4 group">
+            <a href={settings.facebook || FB_LINK} target="_blank" rel="noopener noreferrer" data-testid="booking-fb-link" className="flex items-center gap-4 group">
               <span className="w-12 h-12 rounded-full bg-plum text-cream flex items-center justify-center group-hover:bg-ruby transition-colors"><Facebook className="w-5 h-5" /></span>
               <span>
                 <span className="block text-[11px] uppercase tracking-widest font-bold text-mutedtext">Facebook</span>
                 <span className="font-bold text-charcoal group-hover:text-plum transition-colors">irsmakup.com on Facebook</span>
               </span>
             </a>
-            <div className="flex items-center gap-4">
-              <span className="w-12 h-12 rounded-full bg-plum text-cream flex items-center justify-center"><MapPin className="w-5 h-5" /></span>
+            <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(settings.studio_address)}`} target="_blank" rel="noopener noreferrer" data-testid="booking-address-link" className="flex items-center gap-4 group">
+              <span className="w-12 h-12 rounded-full bg-plum text-cream flex items-center justify-center group-hover:bg-ruby transition-colors"><MapPin className="w-5 h-5" /></span>
               <span>
-                <span className="block text-[11px] uppercase tracking-widest font-bold text-mutedtext">Service Area</span>
-                <span className="font-bold text-charcoal">Philippines — studio & doorstep</span>
+                <span className="block text-[11px] uppercase tracking-widest font-bold text-mutedtext">Studio Address</span>
+                <span className="font-bold text-charcoal group-hover:text-plum transition-colors" data-testid="booking-studio-address">{settings.studio_address}</span>
+                <span className="block text-xs text-mutedtext mt-0.5" data-testid="booking-service-area">{settings.service_area}</span>
               </span>
-            </div>
+            </a>
           </div>
 
           <Reveal delay={0.2} className="mt-8">
             <div className="rounded-[24px] overflow-hidden border border-[#F0E6E2] shadow-[0_30px_60px_-30px_rgba(74,21,37,0.3)]" data-testid="booking-map-embed">
               <iframe
-                title="Hikarah Lntc — service area map, Philippines"
-                src="https://www.google.com/maps?q=Philippines&z=5&output=embed"
+                title={`Hikarah Lntc studio — ${settings.studio_address}`}
+                src={mapEmbedUrl(settings.studio_address)}
                 className="w-full h-[260px] border-0 block"
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"

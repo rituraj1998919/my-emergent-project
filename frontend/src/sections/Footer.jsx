@@ -1,8 +1,9 @@
 import React from "react";
-import { ArrowUpRight, Instagram, Youtube } from "lucide-react";
+import { ArrowUpRight, Instagram, Youtube, MapPin } from "lucide-react";
 import { Logo, WhatsAppIcon } from "../components/Logo";
 import { MaskLine, Reveal } from "../components/Reveal";
 import { WA_LINK, FB_LINK, waLink, scrollToId } from "../lib/site";
+import { useSettings } from "../lib/useSettings";
 
 const PinterestIcon = ({ className = "w-5 h-5" }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
@@ -20,6 +21,13 @@ const LINKS = [
 ];
 
 export default function Footer() {
+  const settings = useSettings();
+  const SOCIALS = [
+    { key: "instagram", label: "Instagram", Icon: Instagram },
+    { key: "pinterest", label: "Pinterest", Icon: PinterestIcon },
+    { key: "youtube", label: "YouTube", Icon: Youtube },
+  ].filter((s) => settings[s.key]);
+
   return (
     <footer className="relative bg-plumdeep text-cream overflow-hidden" data-testid="footer-section">
       <div className="max-w-7xl mx-auto px-5 sm:px-8 pt-20 sm:pt-28 pb-10">
@@ -47,7 +55,7 @@ export default function Footer() {
               <WhatsAppIcon className="w-5 h-5" /> Chat on WhatsApp
             </a>
             <a
-              href={FB_LINK}
+              href={settings.facebook || FB_LINK}
               target="_blank"
               rel="noopener noreferrer"
               data-testid="footer-facebook-btn"
@@ -62,15 +70,16 @@ export default function Footer() {
             </a>
           </Reveal>
           <Reveal delay={0.6} className="mt-7 flex justify-center gap-4">
-            <a href="https://instagram.com/irsmakup" target="_blank" rel="noopener noreferrer" aria-label="Instagram" data-testid="footer-instagram-link" className="w-11 h-11 rounded-full border-2 border-cream/25 text-cream flex items-center justify-center hover:bg-cream hover:text-plumdeep hover:-translate-y-1 transition-all duration-300">
-              <Instagram className="w-5 h-5" />
-            </a>
-            <a href="https://pinterest.com/irsmakup" target="_blank" rel="noopener noreferrer" aria-label="Pinterest" data-testid="footer-pinterest-link" className="w-11 h-11 rounded-full border-2 border-cream/25 text-cream flex items-center justify-center hover:bg-cream hover:text-plumdeep hover:-translate-y-1 transition-all duration-300">
-              <PinterestIcon className="w-5 h-5" />
-            </a>
-            <a href="https://youtube.com/@irsmakup" target="_blank" rel="noopener noreferrer" aria-label="YouTube" data-testid="footer-youtube-link" className="w-11 h-11 rounded-full border-2 border-cream/25 text-cream flex items-center justify-center hover:bg-cream hover:text-plumdeep hover:-translate-y-1 transition-all duration-300">
-              <Youtube className="w-5 h-5" />
-            </a>
+            {SOCIALS.map(({ key, label, Icon }) => (
+              <a key={key} href={settings[key]} target="_blank" rel="noopener noreferrer" aria-label={label} data-testid={`footer-${key}-link`} className="w-11 h-11 rounded-full border-2 border-cream/25 text-cream flex items-center justify-center hover:bg-cream hover:text-plumdeep hover:-translate-y-1 transition-all duration-300">
+                <Icon className="w-5 h-5" />
+              </a>
+            ))}
+          </Reveal>
+          <Reveal delay={0.65}>
+            <p className="mt-6 inline-flex items-center gap-2 text-sm text-cream/55" data-testid="footer-studio-address">
+              <MapPin className="w-4 h-4 text-blush" /> {settings.studio_address}
+            </p>
           </Reveal>
         </div>
 

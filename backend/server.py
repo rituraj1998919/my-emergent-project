@@ -145,6 +145,48 @@ class LoginInput(BaseModel):
     password: str
 
 
+class InquiryStatus(BaseModel):
+    status: str
+
+
+DEFAULT_SETTINGS = {
+    "studio_address": "Narra St. Victoria Pelayo, Brgy Centro Agdao, Davao City",
+    "service_area": "Davao City studio & doorstep — all over the Philippines",
+    "instagram": "https://instagram.com/irsmakup",
+    "pinterest": "https://pinterest.com/irsmakup",
+    "youtube": "https://youtube.com/@irsmakup",
+    "facebook": "https://www.facebook.com/share/19axnjTYpP/",
+}
+
+
+class SettingsInput(BaseModel):
+    studio_address: str = DEFAULT_SETTINGS["studio_address"]
+    service_area: str = DEFAULT_SETTINGS["service_area"]
+    instagram: str = ""
+    pinterest: str = ""
+    youtube: str = ""
+    facebook: str = DEFAULT_SETTINGS["facebook"]
+
+
+@api_router.get("/settings", response_model=dict)
+async def get_settings():
+    doc = await db.settings.find_one({"_id": "site"}) or {}
+    doc.pop("_id", None)
+    return {**DEFAULT_SETTINGS, **doc}
+
+
+@api_router.put("/settings", response_model=dict)
+async def update_settings(input: SettingsInput, authorization: str = Header(None)):
+    await get_current_owner(authorization)
+    data = {k: v.strip() for k, v in input.model_dump().items()}
+    for key in ("instagram", "pinterest", "youtube", "facebook"):
+        if data[key] and not data[key].startswith(("http://", "https://")):
+            data[key] = "https://" + data[key]
+    data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    await db.settings.update_one({"_id": "site"}, {"$set": data}, upsert=True)
+    return {**DEFAULT_SETTINGS, **data}
+
+
 def serialize_media(doc: dict) -> dict:
     return {
         "id": str(doc["_id"]),
@@ -264,6 +306,7 @@ async def create_inquiry(input: InquiryCreate):
     inquiry = Inquiry(**input.model_dump())
     doc = inquiry.to_mongo()
     doc["created_at"] = doc["created_at"].isoformat()
+    doc["status"] = "new"
     result = await db.inquiries.insert_one(doc)
     return {
         "id": str(result.inserted_id),
@@ -280,7 +323,25 @@ async def get_inquiries(authorization: str = Header(None)):
     docs = await db.inquiries.find({}).sort("created_at", -1).to_list(500)
     for d in docs:
         d["id"] = str(d.pop("_id"))
+        d["status"] = d.get("status", "new")
     return docs
+
+
+@api_router.patch("/inquiries/{inquiry_id}/status", response_model=dict)
+async def update_inquiry_status(inquiry_id: str, input: InquiryStatus, authorization: str = Header(None)):
+    await get_current_owner(authorization)
+    if input.status not in ("new", "replied"):
+        raise HTTPException(status_code=400, detail="Status must be 'new' or 'replied'")
+    try:
+        oid = ObjectId(inquiry_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid id")
+    update = {"status": input.status}
+    update["replied_at"] = datetime.now(timezone.utc).isoformat() if input.status == "replied" else None
+    result = await db.inquiries.update_one({"_id": oid}, {"$set": update})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Inquiry not found")
+    return {"id": inquiry_id, "status": input.status}
 
 
 @api_router.post("/media", response_model=dict)
