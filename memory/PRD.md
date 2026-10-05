@@ -32,7 +32,10 @@ Premium, high-converting, Awwwards-level makeup artist portfolio website for **H
 - Footer social buttons: Instagram / Pinterest / YouTube (placeholder handles @irsmakup — replace with real handles).
 - Google Maps embed (Philippines service-area) in Booking section.
 
+## Implemented (2026-10-05, update 3)
+- Inquiry Inbox: Owner Studio me "Booking Inquiries" panel — har form inquiry (naam, phone, date, event type, venue, pax, message) owner ko dikhti hai with one-tap "Reply on WhatsApp". GET /api/inquiries ab owner-only hai (privacy fix; pehle public tha).
+
 ## Backlog
 - **P0**: none (core flows verified).
-- **P1**: replace placeholder social handles with real ones; exact studio address for map pin.
-- **P2**: WhatsApp click counter/analytics; multi-image bulk upload; video thumbnails/posters; admin dashboard for inquiries list.
+- **P1**: replace placeholder social handles (@irsmakup) with real ones; exact studio address for map pin.
+- **P2**: WhatsApp click counter/analytics; inquiry delete/mark-replied; video thumbnails/posters.

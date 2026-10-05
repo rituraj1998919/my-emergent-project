@@ -275,7 +275,8 @@ async def create_inquiry(input: InquiryCreate):
 
 
 @api_router.get("/inquiries", response_model=List[dict])
-async def get_inquiries():
+async def get_inquiries(authorization: str = Header(None)):
+    await get_current_owner(authorization)
     docs = await db.inquiries.find({}).sort("created_at", -1).to_list(500)
     for d in docs:
         d["id"] = str(d.pop("_id"))

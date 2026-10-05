@@ -30,6 +30,8 @@ export default function Admin() {
     }
   };
 
+  const [inquiries, setInquiries] = useState([]);
+
   const loadReviews = async () => {
     try {
       const { data } = await axios.get(`${API_URL}/api/reviews`);
@@ -39,10 +41,22 @@ export default function Admin() {
     }
   };
 
+  const loadInquiries = async () => {
+    try {
+      const { data } = await axios.get(`${API_URL}/api/inquiries`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setInquiries(Array.isArray(data) ? data : []);
+    } catch {
+      setInquiries([]);
+    }
+  };
+
   useEffect(() => {
     if (token) {
       loadItems();
       loadReviews();
+      loadInquiries();
     }
   }, [token]);
 
@@ -191,7 +205,45 @@ export default function Admin() {
       </header>
 
       <main className="max-w-6xl mx-auto px-5 sm:px-8 py-12">
-        <form onSubmit={upload} className="bg-white rounded-[28px] border border-[#F0E6E2] p-7 sm:p-9 shadow-sm" data-testid="admin-upload-form">
+        <section className="bg-white rounded-[28px] border border-[#F0E6E2] p-7 sm:p-9 shadow-sm" data-testid="admin-inquiries-panel">
+          <h2 className="font-display text-3xl text-charcoal">
+            Booking Inquiries <span className="text-base font-sans text-mutedtext" data-testid="admin-inquiries-count">({inquiries.length})</span>
+          </h2>
+          <p className="text-sm text-mutedtext mt-1">Website ke booking form se aayi har inquiry — seedha WhatsApp par reply karein.</p>
+
+          {inquiries.length === 0 ? (
+            <div className="mt-6 rounded-[20px] border-2 border-dashed border-blush/60 p-10 text-center text-mutedtext" data-testid="admin-inquiry-empty">
+              <p className="font-semibold">Abhi koi inquiry nahi aayi — jaise hi koi client form bharega, yahan dikhega.</p>
+            </div>
+          ) : (
+            <div className="mt-6 space-y-4" data-testid="admin-inquiries-list">
+              {inquiries.map((q) => (
+                <div key={q.id} className="rounded-[20px] border border-[#F0E6E2] p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 card-hover" data-testid={`admin-inquiry-item-${q.id}`}>
+                  <div className="min-w-0">
+                    <p className="font-bold text-charcoal">
+                      {q.name} <span className="text-xs font-semibold text-rosegold uppercase tracking-widest">· {q.event_type}</span>
+                    </p>
+                    <p className="text-sm text-mutedtext mt-0.5">
+                      {q.event_date}{q.venue ? ` · ${q.venue}` : ""} · {q.pax} pax
+                    </p>
+                    {q.message && <p className="text-sm text-charcoal/70 mt-1">"{q.message}"</p>}
+                  </div>
+                  <a
+                    href={`https://wa.me/${(q.phone || "").replace(/[^0-9]/g, "")}?text=${encodeURIComponent(`Hi ${q.name}! Hikarah here — salamat kaayo for your ${q.event_type} inquiry. Let's confirm your date!`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-testid={`admin-inquiry-wa-${q.id}-btn`}
+                    className="shrink-0 inline-flex items-center justify-center rounded-full bg-whatsapp text-plumdeep text-sm font-bold px-6 py-2.5 hover:-translate-y-0.5 transition-transform"
+                  >
+                    Reply on WhatsApp
+                  </a>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <form onSubmit={upload} className="bg-white rounded-[28px] border border-[#F0E6E2] p-7 sm:p-9 shadow-sm mt-10" data-testid="admin-upload-form">
           <h2 className="font-display text-3xl text-charcoal flex items-center gap-3">
             <Upload className="w-6 h-6 text-rosegold" /> Post new work
           </h2>
