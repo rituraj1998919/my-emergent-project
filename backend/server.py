@@ -192,7 +192,10 @@ def serialize_media(doc: dict) -> dict:
         "id": str(doc["_id"]),
         "url": f"/api/media/file/{doc['storage_path']}",
         "title": doc.get("title", ""),
-        "category": doc.get("category", "Bridal"),
+        "category": doc.get("category", "Bridal Glam"),
+        "description": doc.get("description", ""),
+        "price": doc.get("price", ""),
+        "rating": doc.get("rating", 5.0),
         "media_type": doc.get("media_type", "image"),
         "created_at": doc.get("created_at"),
     }
@@ -348,8 +351,9 @@ async def update_inquiry_status(inquiry_id: str, input: InquiryStatus, authoriza
 async def upload_media(
     file: UploadFile = File(...),
     title: str = Form(""),
-    category: str = Form("Bridal"),
-    owner: dict = None,
+    category: str = Form("Bridal Glam"),
+    description: str = Form(""),
+    price: str = Form(""),
     authorization: str = Header(None),
 ):
     await get_current_owner(authorization)
@@ -365,7 +369,10 @@ async def upload_media(
     doc = {
         "storage_path": result["path"],
         "title": (title or "").strip() or "New Glam",
-        "category": (category or "Bridal").strip(),
+        "category": (category or "Bridal Glam").strip(),
+        "description": (description or "").strip(),
+        "price": (price or "").strip(),
+        "rating": 5.0,
         "media_type": media_type,
         "original_filename": file.filename,
         "content_type": file.content_type,

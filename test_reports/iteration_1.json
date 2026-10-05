@@ -1,0 +1,30 @@
+{
+  "summary": "End-to-end tested Studio Settings panel + Inquiry Inbox Mark-as-Replied / filters. Backend: 14/14 pytest cases passed (GET/PUT /api/settings auth + https prepend + empty link, inquiry create defaults to 'new', PATCH status replied/new/invalid/bad id/unknown/missing-auth, regression on media/reviews/root). Frontend: admin login works, Studio Settings panel loads values and saves successfully with success toast ('Moved back to New.' / save works), map preview iframe renders; inquiry inbox shows status badges + toggle (data-status flips new<->replied, button text toggles 'Mark as Replied' <-> 'Mark as New'); filter All/New/Replied counts correct (4/3/1); new-count badge shows '3 new'. Public home page: #contact Booking section shows studio_address, booking-address-link opens Google Maps with encoded query, map iframe src contains encoded 'Narra%20St.' address. Footer shows studio address and all 3 social links with hrefs from settings. Settings restored to defaults at end.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Footer.jsx", "issue": "Social icons render even when the link in settings is empty string. Spec requires: if a social link is empty, that icon should disappear from footer. Current code maps SOCIALS unconditionally -> renders <a href=\"\">. Fix: wrap with .filter(({key}) => settings[key]) before .map.", "selector": "[data-testid^=\"footer-\"]-link", "priority": "MEDIUM"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Admin review form", "issues": ["React hydration warning: <span> inside <option> (rating select in Admin.jsx line ~375). Caused by preview tooling injecting x-* wrapper spans into <option> children. Low priority visual-editor artifact; does not break UX but logs console error on every admin visit."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_api.py", "/app/test_reports/pytest/results.xml"],
+  "action_items": [
+    "Footer.jsx: filter out empty social links before mapping (so empty settings hide the icon per spec).",
+    "Optional: avoid rendering span wrappers inside <option> tags in Admin.jsx rating select to silence React hydration warning."
+  ],
+  "critical_code_review_comments": [
+    "server.py update_settings strips whitespace globally — fine, but SettingsInput has defaults for all fields; if a client PUTs partial payload omitting a field, Pydantic fills with default (potentially overwriting a stored custom value). Consider making fields Optional[str] = None and only $set provided keys.",
+    "Footer.jsx missing conditional for empty social links (noted above).",
+    "Admin.jsx uses data-testid='admin-inquiry-item-{id}' while the review request wording called it 'card'. Both parties should align the convention; current implementation is fine functionally."
+  ],
+  "updated_files": ["/app/backend/tests/test_api.py"],
+  "success_rate": {"backend": "100%", "frontend": "95%"},
+  "test_credentials": "hikarah@irsmakup.com / GlamQueen#2024 (owner)",
+  "seed_data_creation": "Created 1 test inquiry (name='TEST_Playwright') via POST /api/inquiries; left in DB with status reverted to 'new'. Admin inbox currently shows 4 inquiries (3 new, 1 replied). Settings restored to documented defaults.",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend regression suite at /app/backend/tests/test_api.py (pytest). All green. Only outstanding issue is Footer not hiding empty-string social icons per spec. Admin uses data-testid=admin-inquiry-item-{id} (not -card-). mapEmbedUrl properly URI-encodes the address."
+}

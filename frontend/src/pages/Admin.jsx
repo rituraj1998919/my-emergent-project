@@ -6,7 +6,7 @@ import { LogoMark } from "../components/Logo";
 import { StudioSettings } from "../components/admin/StudioSettings";
 import { API_URL } from "../lib/site";
 
-const CATEGORIES = ["Bridal", "Glam", "Editorial", "Hair"];
+const CATEGORIES = ["Bridal Glam", "Soft / Natural", "Party & Prom", "Eye & Brows", "Bridal Glam / Full Glam"];
 
 export default function Admin() {
   const [token, setToken] = useState(localStorage.getItem("irsmakup_owner_token") || "");
@@ -15,7 +15,9 @@ export default function Admin() {
   const [items, setItems] = useState([]);
   const [file, setFile] = useState(null);
   const [title, setTitle] = useState("");
-  const [category, setCategory] = useState("Bridal");
+  const [category, setCategory] = useState("Bridal Glam");
+  const [description, setDescription] = useState("");
+  const [price, setPrice] = useState("");
   const [busy, setBusy] = useState(false);
   const [reviewList, setReviewList] = useState([]);
   const [rev, setRev] = useState({ name: "", event: "", quote: "", rating: "5" });
@@ -146,6 +148,8 @@ export default function Admin() {
         fd.append("file", f);
         fd.append("title", title);
         fd.append("category", category);
+        fd.append("description", description);
+        fd.append("price", price);
         await axios.post(`${API_URL}/api/media`, fd, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -154,6 +158,8 @@ export default function Admin() {
       }
       setFile(null);
       setTitle("");
+      setDescription("");
+      setPrice("");
       document.getElementById("media-file-input").value = "";
       loadItems();
     } catch (err) {
@@ -309,6 +315,14 @@ export default function Admin() {
                 {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </label>
+            <label className="block sm:col-span-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-charcoal/70">Description (lightbox me dikhega)</span>
+              <input value={description} onChange={(e) => setDescription(e.target.value)} className="field mt-2" placeholder="e.g. Elegant, long-lasting wedding makeup with flawless skin prep." data-testid="admin-description-input" />
+            </label>
+            <label className="block">
+              <span className="text-xs font-bold uppercase tracking-wider text-charcoal/70">Price</span>
+              <input value={price} onChange={(e) => setPrice(e.target.value)} className="field mt-2" placeholder="e.g. ₱6,500" data-testid="admin-price-input" />
+            </label>
           </div>
 
           <button type="submit" disabled={busy} data-testid="admin-upload-btn" className="mt-6 inline-flex items-center gap-3 rounded-full bg-plum text-cream font-bold px-8 py-3.5 hover:bg-ruby transition-colors disabled:opacity-60">
@@ -339,7 +353,7 @@ export default function Admin() {
                 )}
                 <div className="p-3">
                   <p className="text-sm font-bold text-charcoal truncate">{m.title}</p>
-                  <p className="text-[11px] uppercase tracking-widest text-rosegold font-bold">{m.category}</p>
+                  <p className="text-[11px] uppercase tracking-widest text-rosegold font-bold">{m.category}{m.price ? ` · ${m.price}` : ""}</p>
                 </div>
                 <button
                   onClick={() => remove(m.id)}

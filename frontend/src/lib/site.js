@@ -66,24 +66,6 @@ export const SERVICES = [
   },
 ];
 
-export const GALLERY = [
-  { id: 11, cat: "Bridal", title: "Church Wedding", img: u("1777414552523-becebd67568a"), tall: true },
-  { id: 12, cat: "Soft Glam", title: "Natural Glow", img: "https://images.pexels.com/photos/1124833/pexels-photo-1124833.jpeg?auto=compress&cs=tinysrgb&w=1200" },
-  { id: 13, cat: "Bridal", title: "Down the Aisle", img: u("1548313093-370cf4ba3892") },
-  { id: 14, cat: "Soft Glam", title: "Barefaced Beauty", img: u("1783703890139-fa5ba14cf707") },
-  { id: 15, cat: "Soft Glam", title: "Serene Morning", img: "https://images.pexels.com/photos/39873699/pexels-photo-39873699.jpeg?auto=compress&cs=tinysrgb&w=1200" },
-  { id: 1, cat: "Bridal", title: "The Royal Bride", img: u("1600685890506-593fdf55949b"), tall: true },
-  { id: 2, cat: "Glam", title: "Electric Night Glam", img: u("1596205521983-9c372fb3d4f1") },
-  { id: 3, cat: "Hair", title: "Floral Braid Dream", img: u("1481068164146-e8beb686f4d2") },
-  { id: 4, cat: "Bridal", title: "Golden Hour Bride", img: u("1722805740076-7c51a8669afc"), tall: true },
-  { id: 5, cat: "Editorial", title: "Studio Editorial", img: u("1628153277991-7a185ac84511") },
-  { id: 6, cat: "Glam", title: "Violet Soft Glam", img: u("1585433405076-9626d637cc83"), tall: true },
-  { id: 7, cat: "Hair", title: "Pearl Pin Updo", img: u("1586342805832-c0f10f33ac3d") },
-  { id: 8, cat: "Bridal", title: "Veil & Lace", img: u("1488846343176-08e05ab9a2a1") },
-  { id: 9, cat: "Editorial", title: "Golden Muse", img: u("1610166970010-c2e6c3da7164"), tall: true },
-  { id: 10, cat: "Glam", title: "Rose Lips Ritual", img: u("1585049303349-6680e6179692") },
-];
-
 export const PACKAGES = [
   {
     id: "party",
