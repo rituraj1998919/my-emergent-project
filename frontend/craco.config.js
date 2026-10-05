@@ -110,6 +110,8 @@ let webpackConfig = {
     },
     configure: (webpackConfig) => {
 
+      if (!isDevServer) webpackConfig.devtool = false;
+
       // Add ignored patterns to reduce watched directories
         webpackConfig.watchOptions = {
           ...webpackConfig.watchOptions,
@@ -223,7 +225,26 @@ if (emergentOverlay) {
 }
 
 const configureDevServer = webpackConfig.devServer;
-webpackConfig.devServer = (devServerConfig) =>
-  makeDevServerV5Compatible(configureDevServer(devServerConfig));
+webpackConfig.devServer = (devServerConfig) => {
+  const result = makeDevServerV5Compatible(configureDevServer(devServerConfig));
+  const setup = result.setupMiddlewares;
+  result.setupMiddlewares = (middlewares, devServer) => {
+    const list = setup ? setup(middlewares, devServer) : middlewares;
+    list.unshift({ name: "sensitive-file-guard", middleware: (req, res, next) => {
+      let pathname;
+      try { pathname = decodeURIComponent(decodeURIComponent(req.url.split("?")[0])).toLowerCase().replace(/\\/g, "/"); }
+      catch { res.statusCode = 400; res.end("Bad request"); return; }
+      const parts = pathname.split("/");
+      const privatePath = parts.some(part => (part.startsWith(".") && part !== ".well-known") || ["memory", "backend", "node_modules"].includes(part));
+      const privateFile = /\.(bak|backup|sql|pem|key)$/.test(pathname) || /\/(requirements\.txt|package\.json|yarn\.lock|server\.py)$/.test(pathname);
+      res.setHeader("X-Content-Type-Options", "nosniff");
+      res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+      if (privatePath || privateFile) { res.statusCode = 404; res.end("Not found"); return; }
+      next();
+    }});
+    return list;
+  };
+  return result;
+};
 
 module.exports = webpackConfig;

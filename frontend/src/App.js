@@ -13,6 +13,7 @@ import Reviews from "./sections/Reviews";
 import Booking from "./sections/Booking";
 import Footer from "./sections/Footer";
 import Admin from "./pages/Admin";
+import Security from "./pages/Security";
 
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -86,6 +87,7 @@ function App() {
       <Routes>
         <Route path="/" element={<MainSite />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/admin/security" element={<Security />} />
         <Route path="*" element={<MainSite />} />
       </Routes>
     </BrowserRouter>

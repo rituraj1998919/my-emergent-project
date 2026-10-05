@@ -1,19 +1,21 @@
-from fastapi import FastAPI, APIRouter, HTTPException, UploadFile, File, Form, Header, Response
+from fastapi import FastAPI, APIRouter, HTTPException, UploadFile, File, Form, Header, Response, Request
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 import uuid
-import bcrypt
-import jwt
 import requests
+from starlette.concurrency import run_in_threadpool
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict, BeforeValidator
 from typing import Optional, Annotated, List
 from bson import ObjectId
 from datetime import datetime, timezone, timedelta
-from gallery_features import create_gallery_router
+from gallery_features import create_gallery_router, Category
+from security_controls import SecurityMiddleware, allowed_origins
+from owner_security import OwnerSecurity, LoginInput, LoginOutput, hash_password, verify_password
+from media_security import validated_upload, public_media_path, canonical_type
 
 
 ROOT_DIR = Path(__file__).parent
@@ -23,18 +25,13 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-STORAGE_BASE = (os.environ.get("INTEGRATION_PROXY_URL") or "").strip() or "https://integrations.emergentagent.com"
+STORAGE_BASE = os.environ["INTEGRATION_PROXY_URL"].strip()
 STORAGE_URL = STORAGE_BASE.rstrip("/") + "/objstore/api/v1/storage"
-EMERGENT_KEY = os.environ.get("EMERGENT_LLM_KEY")
+EMERGENT_KEY = os.environ["EMERGENT_LLM_KEY"]
 APP_NAME = "irsmakup"
 
-JWT_SECRET = os.environ["JWT_SECRET"]
-JWT_ALGORITHM = "HS256"
-TOKEN_DAYS = 7
-
-IMAGE_EXTS = {"jpg", "jpeg", "png", "webp", "gif"}
-VIDEO_EXTS = {"mp4", "mov", "webm", "avi", "m4v"}
-MAX_UPLOAD_BYTES = 100 * 1024 * 1024
+security = OwnerSecurity(db)
+TRUSTED_ORIGINS = allowed_origins()
 
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
@@ -73,35 +70,8 @@ def get_object(path: str):
     return resp.content, resp.headers.get("Content-Type", "application/octet-stream")
 
 
-def hash_password(password: str) -> str:
-    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
-
-
-def verify_password(plain: str, hashed: str) -> bool:
-    return bcrypt.checkpw(plain.encode("utf-8"), hashed.encode("utf-8"))
-
-
-def create_token(user_id: str, email: str) -> str:
-    payload = {
-        "sub": user_id, "email": email, "type": "access",
-        "exp": datetime.now(timezone.utc) + timedelta(days=TOKEN_DAYS),
-    }
-    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
-
-
 async def get_current_owner(authorization: str = Header(None)) -> dict:
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    token = authorization[7:]
-    try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        if payload.get("type") != "access":
-            raise HTTPException(status_code=401, detail="Invalid token type")
-        return {"email": payload.get("email"), "sub": payload.get("sub")}
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Session expired, please log in again")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+    return await security.owner(authorization)
 
 
 def to_str(v) -> str:
@@ -132,18 +102,14 @@ class Inquiry(BaseDocument):
 
 
 class InquiryCreate(BaseModel):
-    name: str
-    phone: str
-    event_date: str
-    event_type: str
-    venue: str = ""
-    pax: int = 1
-    message: str = ""
-
-
-class LoginInput(BaseModel):
-    email: str
-    password: str
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    name: str = Field(min_length=1, max_length=120)
+    phone: str = Field(min_length=5, max_length=40)
+    event_date: str = Field(min_length=1, max_length=40)
+    event_type: str = Field(min_length=1, max_length=100)
+    venue: str = Field(default="", max_length=300)
+    pax: int = Field(default=1, ge=1, le=500)
+    message: str = Field(default="", max_length=3000)
 
 
 class InquiryStatus(BaseModel):
@@ -226,9 +192,9 @@ def serialize_review(doc: dict) -> dict:
 
 @api_router.post("/reviews", response_model=dict)
 async def create_review(
-    name: str = Form(...),
-    event: str = Form(""),
-    quote: str = Form(...),
+    name: str = Form(..., min_length=1, max_length=120),
+    event: str = Form("", max_length=200),
+    quote: str = Form(..., min_length=1, max_length=3000),
     rating: int = Form(5),
     photo: UploadFile = File(None),
     authorization: str = Header(None),
@@ -237,13 +203,8 @@ async def create_review(
     rating = max(1, min(5, rating))
     photo_path = ""
     if photo and photo.filename:
-        ext = photo.filename.split(".")[-1].lower() if "." in photo.filename else ""
-        if ext not in IMAGE_EXTS:
-            raise HTTPException(status_code=400, detail="Review photo must be an image (jpg, png, webp, gif)")
-        data = await photo.read()
-        if len(data) > MAX_UPLOAD_BYTES:
-            raise HTTPException(status_code=413, detail="Photo too large (max 100MB)")
-        result = put_object(f"{APP_NAME}/reviews/{uuid.uuid4()}.{ext}", data, photo.content_type or "image/jpeg")
+        data, mime, ext, _ = await validated_upload(photo, photos_only=True)
+        result = await run_in_threadpool(put_object, f"{APP_NAME}/reviews/{uuid.uuid4()}.{ext}", data, mime)
         photo_path = result["path"]
     doc = {
         "name": name.strip() or "Happy Client",
@@ -283,24 +244,9 @@ async def root():
     return {"status": "ok", "service": "irsmakup.com API"}
 
 
-@api_router.post("/auth/login")
-async def owner_login(input: LoginInput):
-    email = input.email.strip().lower()
-    identifier = f"owner:{email}"
-    attempts = await db.login_attempts.find_one({"identifier": identifier})
-    if attempts and attempts.get("count", 0) >= 5 and datetime.now(timezone.utc) < attempts.get("locked_until", datetime.now(timezone.utc)):
-        raise HTTPException(status_code=429, detail="Too many attempts. Try again in 15 minutes.")
-    user = await db.users.find_one({"email": email})
-    if not user or not verify_password(input.password, user.get("password_hash", "")):
-        await db.login_attempts.update_one(
-            {"identifier": identifier},
-            {"$inc": {"count": 1},
-             "$set": {"locked_until": datetime.now(timezone.utc) + timedelta(minutes=15)}},
-            upsert=True,
-        )
-        raise HTTPException(status_code=401, detail="Incorrect email or password")
-    await db.login_attempts.delete_one({"identifier": identifier})
-    return {"access_token": create_token(str(user["_id"]), user["email"]), "email": user["email"], "role": user.get("role", "owner")}
+@api_router.post("/auth/login", response_model=LoginOutput)
+async def owner_login(input: LoginInput, request: Request):
+    return await security.login(input, request)
 
 
 @api_router.post("/inquiries", response_model=dict)
@@ -351,22 +297,16 @@ async def update_inquiry_status(inquiry_id: str, input: InquiryStatus, authoriza
 @api_router.post("/media", response_model=dict)
 async def upload_media(
     file: UploadFile = File(...),
-    title: str = Form(""),
-    category: str = Form("Bridal Glam"),
-    description: str = Form(""),
-    price: str = Form(""),
+    title: str = Form("", max_length=160),
+    category: Category = Form("Bridal Glam"),
+    description: str = Form("", max_length=2000),
+    price: str = Form("", max_length=60),
     authorization: str = Header(None),
 ):
     await get_current_owner(authorization)
-    ext = file.filename.split(".")[-1].lower() if "." in file.filename else ""
-    if ext not in IMAGE_EXTS and ext not in VIDEO_EXTS:
-        raise HTTPException(status_code=400, detail="Only photos (jpg, png, webp, gif) and videos (mp4, mov, webm) are allowed")
-    media_type = "video" if ext in VIDEO_EXTS else "image"
-    data = await file.read()
-    if len(data) > MAX_UPLOAD_BYTES:
-        raise HTTPException(status_code=413, detail="File too large (max 100MB)")
+    data, mime, ext, media_type = await validated_upload(file)
     path = f"{APP_NAME}/media/{uuid.uuid4()}.{ext}"
-    result = put_object(path, data, file.content_type or "application/octet-stream")
+    result = await run_in_threadpool(put_object, path, data, mime)
     doc = {
         "storage_path": result["path"],
         "title": (title or "").strip() or "New Glam",
@@ -376,7 +316,7 @@ async def upload_media(
         "rating": 5.0,
         "media_type": media_type,
         "original_filename": file.filename,
-        "content_type": file.content_type,
+        "content_type": mime,
         "size": result.get("size", len(data)),
         "is_deleted": False,
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -394,11 +334,17 @@ async def list_media():
 
 @api_router.get("/media/file/{path:path}")
 async def serve_media(path: str):
+    public_media_path(path)
+    visible = await db.media.find_one({"storage_path": path, "is_deleted": False}, {"_id": 0, "storage_path": 1})
+    if not visible:
+        visible = await db.reviews.find_one({"photo_path": path, "is_deleted": False}, {"_id": 0, "photo_path": 1})
+    if not visible:
+        raise HTTPException(status_code=404, detail="File not found")
     try:
-        data, content_type = get_object(path)
+        data, _ = await run_in_threadpool(get_object, path)
     except requests.HTTPError:
         raise HTTPException(status_code=404, detail="File not found")
-    return Response(content=data, media_type=content_type, headers={"Cache-Control": "public, max-age=86400"})
+    return Response(content=data, media_type=canonical_type(path), headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "Content-Security-Policy": "default-src 'none'; sandbox"})
 
 
 @api_router.delete("/media/{media_id}", response_model=dict)
@@ -415,26 +361,12 @@ async def delete_media(media_id: str, authorization: str = Header(None)):
 
 
 async def seed_admin():
-    admin_email = os.environ.get("ADMIN_EMAIL", "hikarah@irsmakup.com").lower()
-    admin_password = os.environ.get("ADMIN_PASSWORD", "GlamQueen#2024")
-    existing = await db.users.find_one({"email": admin_email})
-    if existing is None:
-        await db.users.insert_one({
-            "email": admin_email,
-            "password_hash": hash_password(admin_password),
-            "name": "Hikarah Lntc",
-            "role": "owner",
-            "created_at": datetime.now(timezone.utc).isoformat(),
-        })
-    elif not verify_password(admin_password, existing.get("password_hash", "")):
-        await db.users.update_one(
-            {"email": admin_email},
-            {"$set": {"password_hash": hash_password(admin_password)}},
-        )
+    await security.seed()
 
 
 @app.on_event("startup")
 async def startup():
+    await security.initialize()
     await seed_admin()
     try:
         init_storage()
@@ -445,13 +377,17 @@ async def startup():
 
 app.include_router(api_router)
 app.include_router(create_gallery_router(db, get_current_owner, serialize_media))
+app.include_router(security.router())
+
+app.add_middleware(SecurityMiddleware, db=db, origins=TRUSTED_ORIGINS)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_credentials=False,
+    allow_origins=TRUSTED_ORIGINS,
+    allow_methods=["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
+    expose_headers=["Retry-After", "RateLimit-Limit", "RateLimit-Remaining", "RateLimit-Reset"],
 )
 
 logging.basicConfig(

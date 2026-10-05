@@ -9,11 +9,16 @@ import { ComparisonManager } from "../components/admin/ComparisonManager";
 import { LookInsights } from "../components/admin/LookInsights";
 import { GALLERY_CATEGORIES } from "../lib/gallery";
 import { API_URL } from "../lib/site";
+import { useOwnerSession } from "../lib/ownerSession";
+import { Link } from "react-router-dom";
 
 const CATEGORIES = GALLERY_CATEGORIES;
 
 export default function Admin() {
-  const [token, setToken] = useState(localStorage.getItem("irsmakup_owner_token") || "");
+  const { token, updateToken, checking } = useOwnerSession();
+  const [loginError, setLoginError] = useState("");
+  const [retryAt, setRetryAt] = useState(0);
+  const [secondsLeft, setSecondsLeft] = useState(0);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [items, setItems] = useState([]);
@@ -78,12 +83,20 @@ export default function Admin() {
   }, [token]);
 
   useEffect(() => {
-    if (token) {
+    if (token && !checking) {
       loadItems();
       loadReviews();
       loadInquiries();
     }
-  }, [token, loadItems, loadReviews, loadInquiries]);
+  }, [token, checking, loadItems, loadReviews, loadInquiries]);
+
+  useEffect(() => {
+    const tick = () => setSecondsLeft(Math.max(0, Math.ceil((retryAt - Date.now()) / 1000)));
+    tick();
+    if (!retryAt) return;
+    const timer = setInterval(tick, 1000);
+    return () => clearInterval(timer);
+  }, [retryAt]);
 
   const submitReview = async (e) => {
     e.preventDefault();
@@ -125,15 +138,21 @@ export default function Admin() {
 
   const login = async (e) => {
     e.preventDefault();
+    setLoginError("");
     setBusy(true);
     try {
       const { data } = await axios.post(`${API_URL}/api/auth/login`, { email, password });
-      localStorage.setItem("irsmakup_owner_token", data.access_token);
-      setToken(data.access_token);
+      updateToken(data.access_token);
+      setPassword("");
+      setRetryAt(0);
       toast.success("Welcome back, Hikarah!");
     } catch (err) {
       const detail = err.response?.data?.detail;
-      toast.error(typeof detail === "string" ? detail : "Login failed. Try again.");
+      setLoginError(typeof detail === "string" ? detail : "Login failed. Try again.");
+      if (err.response?.status === 429) {
+        const retry = Number(err.response.headers["retry-after"]);
+        if (retry > 0) setRetryAt(Date.now() + retry * 1000);
+      }
     } finally {
       setBusy(false);
     }
@@ -148,6 +167,7 @@ export default function Admin() {
     setBusy(true);
     try {
       const list = Array.from(file).slice(0, 10);
+      if (list.some(f => f.size > 5 * 1024 * 1024)) { toast.error("Each photo or video must be 5MB or smaller."); return; }
       let done = 0;
       for (const f of list) {
         const fd = new FormData();
@@ -189,9 +209,10 @@ export default function Admin() {
   };
 
   const logout = () => {
-    localStorage.removeItem("irsmakup_owner_token");
-    setToken("");
+    updateToken("");
   };
+
+  if (checking) return <div className="min-h-screen bg-cream p-10 text-center" data-testid="admin-session-loading">Checking owner session…</div>;
 
   if (!token) {
     return (
@@ -209,7 +230,9 @@ export default function Admin() {
             <span className="text-xs font-bold uppercase tracking-wider text-charcoal/70">Password</span>
             <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="field mt-2" placeholder="••••••••" data-testid="admin-password-input" />
           </label>
-          <button type="submit" disabled={busy} data-testid="admin-login-btn" className="mt-7 w-full inline-flex items-center justify-center gap-2 rounded-full bg-plum text-cream font-bold px-6 py-3.5 hover:bg-ruby transition-colors disabled:opacity-60">
+          {loginError && <p role="alert" className="mt-4 text-sm text-ruby" data-testid="admin-login-error">{loginError}</p>}
+          {secondsLeft > 0 && <p role="status" className="mt-2 text-xs text-mutedtext" data-testid="admin-login-retry">Try again in {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, "0")}</p>}
+          <button type="submit" disabled={busy || secondsLeft > 0} data-testid="admin-login-btn" className="mt-7 w-full inline-flex items-center justify-center gap-2 rounded-full bg-plum text-cream font-bold px-6 py-3.5 hover:bg-ruby transition-colors disabled:opacity-60">
             <Lock className="w-4 h-4" /> {busy ? "Checking…" : "Enter Studio"}
           </button>
           <a href="/" className="block text-center text-sm text-mutedtext hover:text-plum mt-6 transition-colors" data-testid="admin-back-link">← Back to website</a>
@@ -222,9 +245,10 @@ export default function Admin() {
     <div className="min-h-screen bg-cream" data-testid="admin-studio-page">
       <Toaster position="top-center" richColors />
       <header className="glass sticky top-0 z-40 border-b border-[#F0E6E2]">
-        <div className="max-w-6xl mx-auto px-5 sm:px-8 h-[68px] flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-5 sm:px-8 min-h-[68px] py-3 flex flex-wrap gap-3 items-center justify-between">
           <div className="flex items-center gap-3"><LogoMark size={34} /><span className="font-display italic text-2xl text-charcoal">Owner Studio</span></div>
           <div className="flex items-center gap-3">
+            <Link to="/admin/security" className="text-sm font-semibold text-plum hover:text-ruby transition-colors" data-testid="admin-security-link">Security</Link>
             <a href="/" className="text-sm font-semibold text-mutedtext hover:text-plum transition-colors" data-testid="admin-view-site-link">View site</a>
             <button onClick={logout} data-testid="admin-logout-btn" className="inline-flex items-center gap-2 rounded-full border-2 border-charcoal/10 px-4 py-2 text-sm font-bold hover:border-ruby hover:text-ruby transition-colors">
               <LogOut className="w-4 h-4" /> Log out
@@ -306,12 +330,12 @@ export default function Admin() {
           <h2 className="font-display text-3xl text-charcoal flex items-center gap-3">
             <Upload className="w-6 h-6 text-rosegold" /> Post new work
           </h2>
-          <p className="text-sm text-mutedtext mt-1">Photo ya video choose karein — website ke portfolio me turant live ho jayega.</p>
+          <p className="text-sm text-mutedtext mt-1" data-testid="admin-upload-limits">Photos & videos · Maximum 5MB per file · JPEG, PNG, WebP, GIF, MP4, MOV, WebM, AVI</p>
 
           <div className="mt-6 grid sm:grid-cols-3 gap-4">
             <label className="block sm:col-span-1">
               <span className="text-xs font-bold uppercase tracking-wider text-charcoal/70">Photos / Videos * (up to 10 ek saath)</span>
-              <input id="media-file-input" type="file" accept="image/*,video/*" multiple required onChange={(e) => setFile(e.target.files)} className="field mt-2 p-2 file:mr-3 file:rounded-full file:border-0 file:bg-blush file:text-plumdeep file:px-4 file:py-1.5 file:text-xs file:font-bold" data-testid="admin-file-input" />
+              <input id="media-file-input" type="file" accept=".jpg,.jpeg,.png,.webp,.gif,.mp4,.mov,.m4v,.webm,.avi" multiple required onChange={(e) => setFile(e.target.files)} className="field mt-2 p-2 file:mr-3 file:rounded-full file:border-0 file:bg-blush file:text-plumdeep file:px-4 file:py-1.5 file:text-xs file:font-bold" data-testid="admin-file-input" />
             </label>
             <label className="block">
               <span className="text-xs font-bold uppercase tracking-wider text-charcoal/70">Title</span>
@@ -406,7 +430,8 @@ export default function Admin() {
           </label>
           <label className="block mt-4">
             <span className="text-xs font-bold uppercase tracking-wider text-charcoal/70">Client Photo</span>
-            <input id="review-photo-input" type="file" accept="image/*" onChange={(e) => setRevPhoto(e.target.files[0])} className="field mt-2 p-2 file:mr-3 file:rounded-full file:border-0 file:bg-blush file:text-plumdeep file:px-4 file:py-1.5 file:text-xs file:font-bold" data-testid="admin-review-photo-input" />
+            <input id="review-photo-input" type="file" accept=".jpg,.jpeg,.png,.webp,.gif" onChange={(e) => setRevPhoto(e.target.files[0])} className="field mt-2 p-2 file:mr-3 file:rounded-full file:border-0 file:bg-blush file:text-plumdeep file:px-4 file:py-1.5 file:text-xs file:font-bold" data-testid="admin-review-photo-input" />
+            <span className="text-xs text-mutedtext mt-2 block" data-testid="admin-review-photo-limits">JPEG, PNG, WebP or GIF · Maximum 5MB</span>
           </label>
           <button type="submit" disabled={revBusy} data-testid="admin-review-submit-btn" className="mt-6 inline-flex items-center gap-3 rounded-full bg-plum text-cream font-bold px-8 py-3.5 hover:bg-ruby transition-colors disabled:opacity-60">
             {revBusy ? "Posting…" : "Post Review"}
